@@ -2,18 +2,25 @@ import type { ImageSourcePropType } from 'react-native';
 
 /** Bundled menu photos — works offline and when Railway uploads are missing. */
 const BY_NAME: Record<string, ImageSourcePropType> = {
+  // Hot drinks
+  espresso: require('./espresso.jpg'),
+  'café crème': require('./cafe-creme.jpg'),
+  'cafe creme': require('./cafe-creme.jpg'),
+  cortado: require('./cortado.jpg'),
   'flat white': require('./flat-white.jpg'),
   'spanish latte': require('./spanish-latte.jpg'),
   cappuccino: require('./cappuccino.jpg'),
   latte: require('./latte.jpg'),
   mochaccino: require('./mochaccino.jpg'),
   'caramel macchiato': require('./caramel-macchiato.jpg'),
+  'chai latte': require('./chai-latte.jpg'),
   'latte macchiato': require('./latte-macchiato.jpg'),
-  'matcha latte': require('./matcha-latte.jpg'),
   'hot chocolate': require('./hot-chocolate.jpg'),
-  'hot chocolate mit sahne': require('./hot-chocolate.jpg'),
+  'hot chocolate mit sahne': require('./hot-chocolate-sahne.jpg'),
   'lavender latte': require('./lavender-latte.jpg'),
   'dirty chai': require('./dirty-chai.jpg'),
+
+  // Cold
   'iced americano': require('./iced-americano.jpg'),
   'iced latte macchiato': require('./iced-latte-macchiato.jpg'),
   'iced spanish latte': require('./iced-spanish-latte.jpg'),
@@ -21,22 +28,42 @@ const BY_NAME: Record<string, ImageSourcePropType> = {
   'iced lavender latte': require('./iced-lavender-latte.jpg'),
   'iced tea': require('./iced-tea.jpg'),
   juice: require('./juice.jpg'),
+  mojito: require('./mojito.jpg'),
+  americano: require('./americano.jpg'),
+  'iced latte': require('./iced-latte.jpg'),
+  'cold brew': require('./cold-brew.jpg'),
+
+  // Tea
+  'english breakfast': require('./english-breakfast.jpg'),
+  'earl grey': require('./earl-grey.jpg'),
+  'green tea': require('./green-tea.jpg'),
+
+  // Matcha
+  'matcha latte': require('./matcha-latte.jpg'),
   'iced matcha': require('./iced-matcha.jpg'),
+  'cloudy matcha': require('./cloudy-matcha.jpg'),
+  'iced mango matcha': require('./mango-matcha.jpg'),
+  'iced strawberry matcha': require('./strawberry-matcha.jpg'),
+  'lavender matcha': require('./lavender-matcha.jpg'),
+  'dirty matcha': require('./dirty-matcha.jpg'),
+
+  // Frappes
   'caramel frappe': require('./caramel-frappe.jpg'),
   'strawberry frappe': require('./strawberry-frappe.jpg'),
   'vanilla frappe': require('./vanilla-frappe.jpg'),
   'cookies frappe': require('./cookies-frappe.jpg'),
   'white choco frappe': require('./white-choco-frappe.jpg'),
+  'mocha frappe': require('./mocha-frappe.jpg'),
+  mocha: require('./mocha.jpg'),
+
+  // Milkshakes
   'vanilla milkshake': require('./vanilla-milkshake.jpg'),
+  'strawberry milkshake': require('./strawberry-milkshake.jpg'),
+  'chocolate milkshake': require('./chocolate-milkshake.jpg'),
+  'oreo milkshake': require('./oreo-milkshake.jpg'),
   'lotus milkshake': require('./lotus-milkshake.jpg'),
   'mango milkshake': require('./mango-milkshake.jpg'),
-  americano: require('./americano.jpg'),
-  mocha: require('./mocha.jpg'),
-  'mocha frappe': require('./mocha-frappe.jpg'),
-  'chocolate milkshake': require('./chocolate-milkshake.jpg'),
-  'iced latte': require('./iced-latte.jpg'),
-  'cold brew': require('./cold-brew.jpg'),
-  'chai latte': require('./chai-latte.jpg'),
+
   affogato: require('./affogato.jpg'),
 };
 

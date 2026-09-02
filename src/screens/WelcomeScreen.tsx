@@ -68,6 +68,7 @@ function SlideBackground({
       contentFit="cover"
       cachePolicy="memory-disk"
       transition={200}
+      pointerEvents="none"
       onError={() => setFailed(true)}
     />
   );
@@ -87,6 +88,7 @@ export function WelcomeScreen({ onGetStarted }: Props) {
     [data?.slides],
   );
   const ctaText = data?.ctaText ?? 'Get Started';
+  const footerReserve = Math.max(insets.bottom, 18) + 100;
 
   const goTo = useCallback(
     (next: number, animated = true) => {
@@ -176,14 +178,15 @@ export function WelcomeScreen({ onGetStarted }: Props) {
           const titleAlign = alignStyle(item.titleAlign);
           const bodyAlign = alignStyle(item.bodyAlign);
           const copyStyle = copyBlockStyle(item.copyBlockVertical, insets.bottom);
+          const slideHeight = Math.max(320, height - footerReserve);
 
           return (
-            <View style={{ width, height, overflow: 'hidden' }}>
+            <View style={{ width, height: slideHeight, overflow: 'hidden' }}>
               <SlideBackground
                 imageUri={imageUri}
                 fallbackSource={fallbackSource}
                 width={width}
-                height={height}
+                height={slideHeight}
               />
               {item.showBottomShadow ? (
                 <View pointerEvents="none" style={styles.bottomShadow}>
@@ -200,6 +203,7 @@ export function WelcomeScreen({ onGetStarted }: Props) {
               ) : null}
               {item.titlePlacement === 'top' ? (
                 <Text
+                  pointerEvents="none"
                   style={[
                     styles.title,
                     styles.titleTop,
@@ -212,7 +216,7 @@ export function WelcomeScreen({ onGetStarted }: Props) {
                   {item.title}
                 </Text>
               ) : null}
-              <View style={copyStyle}>
+              <View pointerEvents="none" style={copyStyle}>
                 {item.titlePlacement === 'bottom' ? (
                   <Text style={[styles.title, { textAlign: titleAlign }]}>
                     {item.title}
@@ -228,7 +232,10 @@ export function WelcomeScreen({ onGetStarted }: Props) {
       />
 
       <View
-        style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 18) }]}
+        style={[
+          styles.footerDock,
+          { paddingBottom: Math.max(insets.bottom, 18) },
+        ]}
       >
         <View style={styles.dots} accessibilityRole="adjustable">
           {slides.map((slide, i) => (
@@ -242,6 +249,7 @@ export function WelcomeScreen({ onGetStarted }: Props) {
           accessibilityRole="button"
           accessibilityLabel={ctaText}
           onPress={onGetStarted}
+          hitSlop={12}
           style={styles.cta}
         >
           <Text style={styles.ctaText}>{ctaText}</Text>
@@ -308,6 +316,15 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     gap: 18,
+    zIndex: 50,
+    elevation: 50,
+  },
+  footerDock: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    alignItems: 'center',
+    gap: 18,
+    backgroundColor: 'rgba(10, 8, 6, 0.55)',
   },
   dots: {
     flexDirection: 'row',

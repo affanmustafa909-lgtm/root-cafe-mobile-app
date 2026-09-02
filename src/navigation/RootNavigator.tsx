@@ -1,7 +1,12 @@
 import { Feather } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { CommonActions, NavigationContainer } from '@react-navigation/native';
+import {
+  CommonActions,
+  NavigationContainer,
+  useNavigation,
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -11,6 +16,7 @@ import { OfflineBanner } from '../components/OfflineBanner';
 import { fonts, radii } from '../constants/theme';
 import { registerForPushNotifications } from '../hooks/usePushNotifications';
 import { useMenuSocket } from '../hooks/useMenuSocket';
+import { useOrderSocket } from '../hooks/useOrderSocket';
 import { CartScreen } from '../screens/CartScreen';
 import { CheckoutScreen } from '../screens/CheckoutScreen';
 import { HomeScreen } from '../screens/HomeScreen';
@@ -64,6 +70,7 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
+type RootNav = NativeStackNavigationProp<RootStackParamList>;
 
 function dismissAuth(
   navigation: {
@@ -84,13 +91,19 @@ function dismissAuth(
     const routes = state.routes.filter(
       (route) => route.name !== 'Auth' && route.name !== 'Splash',
     );
-    if (after === 'Checkout' && !routes.some((route) => route.name === 'Checkout')) {
+    if (
+      after === 'Checkout' &&
+      !routes.some((route) => route.name === 'Checkout')
+    ) {
       routes.push({ name: 'Checkout', key: 'checkout-after-auth' });
     }
     const checkoutIndex = routes.findIndex((route) => route.name === 'Checkout');
     return CommonActions.reset({
       ...state,
-      index: after === 'Checkout' && checkoutIndex >= 0 ? checkoutIndex : routes.length - 1,
+      index:
+        after === 'Checkout' && checkoutIndex >= 0
+          ? checkoutIndex
+          : routes.length - 1,
       routes,
     });
   });
@@ -117,7 +130,7 @@ function AuthNavigator({
       <AuthStack.Screen name="Register">
         {({ navigation }) => (
           <RegisterScreen
-            onLogin={() => navigation.navigate('Login')}
+            onLogin={() => navigation.goBack()}
             onSuccess={onAuthenticated}
             onClose={() => navigation.goBack()}
             onOpenLegal={(type) =>
@@ -150,30 +163,76 @@ function TabIcon({
   );
 }
 
-function MainTabs({
-  navigation,
-}: {
-  navigation: {
-    navigate: (name: keyof RootStackParamList, params?: object) => void;
-  };
-}) {
+function HomeTabScreen() {
+  const navigation = useNavigation<RootNav>();
+  return (
+    <HomeScreen
+      onOpenMenu={(categoryId) => navigation.navigate('Menu', { categoryId })}
+      onOpenProduct={(productId) =>
+        navigation.navigate('ProductDetails', { productId })
+      }
+    />
+  );
+}
+
+function OrdersTabScreen() {
+  const navigation = useNavigation<RootNav>();
+  return (
+    <OrdersScreen
+      onOpenOrder={(orderId) => navigation.navigate('OrderDetails', { orderId })}
+      onTrackOrder={(orderId) =>
+        navigation.navigate('OrderTracking', { orderId })
+      }
+    />
+  );
+}
+
+function CartTabScreen() {
+  const navigation = useNavigation<RootNav>();
+  const { isAuthenticated } = useAuth();
+  return (
+    <CartScreen
+      onContinueShopping={() => navigation.navigate('Menu')}
+      onCheckout={() => {
+        if (!isAuthenticated) {
+          navigation.navigate('Auth', { after: 'Checkout' });
+          return;
+        }
+        navigation.navigate('Checkout');
+      }}
+      onEditItem={(cartItemId, productId) =>
+        navigation.navigate('ProductDetails', {
+          productId,
+          editCartItemId: cartItemId,
+        })
+      }
+    />
+  );
+}
+
+function ProfileTabScreen() {
+  const navigation = useNavigation<RootNav>();
+  return (
+    <ProfileScreen
+      onOpenSettings={() => navigation.navigate('Settings')}
+      onSignIn={() => navigation.navigate('Auth')}
+    />
+  );
+}
+
+function MainTabs() {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
   const { itemCount } = useCart();
   const { colors } = useAppTheme();
-
-  const goCheckout = () => {
-    if (!isAuthenticated) {
-      navigation.navigate('Auth', { after: 'Checkout' });
-      return;
-    }
-    navigation.navigate('Checkout');
-  };
+  useOrderSocket(isAuthenticated);
 
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
+        lazy: false,
+        freezeOnBlur: true,
         tabBarActiveTintColor: colors.coral,
         tabBarInactiveTintColor: colors.textTertiary,
         tabBarLabelStyle: {
@@ -193,46 +252,27 @@ function MainTabs({
     >
       <Tab.Screen
         name="HomeTab"
+        component={HomeTabScreen}
         options={{
           title: t('tabs.home'),
           tabBarIcon: ({ color, focused }) => (
             <TabIcon name="home" color={color} focused={focused} />
           ),
         }}
-      >
-        {() => (
-          <HomeScreen
-            onOpenMenu={(categoryId) =>
-              navigation.navigate('Menu', { categoryId })
-            }
-            onOpenProduct={(productId) =>
-              navigation.navigate('ProductDetails', { productId })
-            }
-          />
-        )}
-      </Tab.Screen>
+      />
       <Tab.Screen
         name="OrdersTab"
+        component={OrdersTabScreen}
         options={{
           title: t('tabs.orders'),
           tabBarIcon: ({ color, focused }) => (
             <TabIcon name="clipboard" color={color} focused={focused} />
           ),
         }}
-      >
-        {() => (
-          <OrdersScreen
-            onOpenOrder={(orderId) =>
-              navigation.navigate('OrderDetails', { orderId })
-            }
-            onTrackOrder={(orderId) =>
-              navigation.navigate('OrderTracking', { orderId })
-            }
-          />
-        )}
-      </Tab.Screen>
+      />
       <Tab.Screen
         name="CartTab"
+        component={CartTabScreen}
         options={{
           title: t('tabs.cart'),
           tabBarBadge: itemCount > 0 ? itemCount : undefined,
@@ -246,36 +286,17 @@ function MainTabs({
             <TabIcon name="shopping-bag" color={color} focused={focused} />
           ),
         }}
-      >
-        {() => (
-          <CartScreen
-            onContinueShopping={() => navigation.navigate('Menu')}
-            onCheckout={goCheckout}
-            onEditItem={(cartItemId, productId) =>
-              navigation.navigate('ProductDetails', {
-                productId,
-                editCartItemId: cartItemId,
-              })
-            }
-          />
-        )}
-      </Tab.Screen>
+      />
       <Tab.Screen
         name="ProfileTab"
+        component={ProfileTabScreen}
         options={{
           title: t('tabs.profile'),
           tabBarIcon: ({ color, focused }) => (
             <TabIcon name="user" color={color} focused={focused} />
           ),
         }}
-      >
-        {() => (
-          <ProfileScreen
-            onOpenSettings={() => navigation.navigate('Settings')}
-            onSignIn={() => navigation.navigate('Auth')}
-          />
-        )}
-      </Tab.Screen>
+      />
     </Tab.Navigator>
   );
 }
@@ -320,9 +341,11 @@ export function RootNavigator() {
   }, []);
 
   const finishWelcome = useCallback(() => {
-    void AsyncStorage.setItem(STORAGE_KEYS.welcomeSeen, '1');
-    setOnboardingDone(true);
-    setShowWelcome(false);
+    void AsyncStorage.setItem(STORAGE_KEYS.welcomeSeen, '1').finally(() => {
+      setShowWelcome(false);
+      setOnboardingDone(true);
+      setShowSplash(false);
+    });
   }, []);
 
   useEffect(() => {
@@ -349,9 +372,11 @@ export function RootNavigator() {
           </RootStack.Screen>
         ) : (
           <>
-            <RootStack.Screen name="Main" options={{ headerShown: false }}>
-              {({ navigation }) => <MainTabs navigation={navigation} />}
-            </RootStack.Screen>
+            <RootStack.Screen
+              name="Main"
+              component={MainTabs}
+              options={{ headerShown: false }}
+            />
             <RootStack.Screen name="Auth" options={{ headerShown: false }}>
               {({ navigation, route }) => (
                 <AuthNavigator

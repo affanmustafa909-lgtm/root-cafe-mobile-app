@@ -113,7 +113,8 @@ export function MenuScreen({ initialCategoryId, onOpenProduct }: Props) {
         overScrollMode="never"
         showsVerticalScrollIndicator={false}
       >
-        {categories.isLoading || products.isLoading ? (
+        {(categories.isPending && !categories.data) ||
+        (products.isPending && !products.data) ? (
           <View style={styles.skeletons}>
             <Skeleton height={112} radius={radii.lg} />
             <Skeleton height={112} radius={radii.lg} />

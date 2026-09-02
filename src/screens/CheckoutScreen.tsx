@@ -15,7 +15,7 @@ import { Card } from '../components/Card';
 import { LoadingState } from '../components/States';
 import { ScheduledPickupPicker } from '../components/ScheduledPickupPicker';
 import { fonts, radii, spacing } from '../constants/theme';
-import { useAppSettings } from '../hooks/useMenu';
+import { useAppSettings, useStampCard } from '../hooks/useMenu';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { orderApi, productApi } from '../services/api';
 import { useAuth } from '../store/AuthContext';
@@ -26,6 +26,7 @@ import { friendlyError } from '../utils/errors';
 import { generatePickupDates, generatePickupSlots } from '../utils/pickup';
 import { calcLineTotal, calcTax, formatPrice } from '../utils/pricing';
 import { completeCartOptions } from '../utils/customization';
+import { useQueryClient } from '@tanstack/react-query';
 
 type Props = {
   onSuccess: (order: Order) => void;
@@ -39,11 +40,14 @@ export function CheckoutScreen({ onSuccess, onNeedAuth }: Props) {
   const { isAuthenticated } = useAuth();
   const { items, subtotal, clearCart, replaceItems } = useCart();
   const settingsQuery = useAppSettings();
+  const stampQuery = useStampCard(isAuthenticated);
+  const qc = useQueryClient();
   const { isOffline } = useNetworkStatus();
   const [pickupType, setPickupType] = useState<PickupType>('ASAP');
   const [pickupDate, setPickupDate] = useState<string | undefined>();
   const [pickupTime, setPickupTime] = useState<string | undefined>();
   const [notes, setNotes] = useState('');
+  const [redeemFreeDrink, setRedeemFreeDrink] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const notesRef = useRef<TextInput>(null);
@@ -162,8 +166,24 @@ export function CheckoutScreen({ onSuccess, onNeedAuth }: Props) {
   }, [pickupType, pickupDate, dates]);
 
   const taxRate = settings?.taxRate ?? 0;
-  const tax = calcTax(subtotal, taxRate);
-  const total = subtotal + tax;
+  const freeAvailable = !!stampQuery.data?.freeDrinkAvailable;
+  const freeDiscount = useMemo(() => {
+    if (!redeemFreeDrink || !freeAvailable || !items.length) return 0;
+    return items.reduce((best, item) => {
+      const unit =
+        item.lineTotal / Math.max(1, item.quantity) ||
+        Number(item.basePrice) ||
+        0;
+      return unit > best ? unit : best;
+    }, 0);
+  }, [redeemFreeDrink, freeAvailable, items]);
+  const payableSubtotal = Math.max(0, subtotal - freeDiscount);
+  const tax = calcTax(payableSubtotal, taxRate);
+  const total = payableSubtotal + tax;
+
+  useEffect(() => {
+    if (!freeAvailable) setRedeemFreeDrink(false);
+  }, [freeAvailable]);
 
   const revalidateCart = async (): Promise<CartItem[] | null> => {
     const next: CartItem[] = [];
@@ -240,6 +260,7 @@ export function CheckoutScreen({ onSuccess, onNeedAuth }: Props) {
         pickupDate: pickupType === 'SCHEDULED' ? pickupDate : undefined,
         pickupTime: pickupType === 'SCHEDULED' ? pickupTime : undefined,
         notes: notes.trim() || undefined,
+        redeemFreeDrink: redeemFreeDrink && freeAvailable,
         items: validItems.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
@@ -247,6 +268,7 @@ export function CheckoutScreen({ onSuccess, onNeedAuth }: Props) {
         })),
       });
       clearCart();
+      void qc.invalidateQueries({ queryKey: ['stamp-card'] });
       onSuccess(order);
     } catch (error) {
       Alert.alert(t('checkout.orderError'), friendlyError(error));
@@ -255,7 +277,7 @@ export function CheckoutScreen({ onSuccess, onNeedAuth }: Props) {
     }
   };
 
-  if (settingsQuery.isLoading) {
+  if (settingsQuery.isPending && !settingsQuery.data) {
     return <LoadingState message={t('common.loading')} />;
   }
 
@@ -338,6 +360,33 @@ export function CheckoutScreen({ onSuccess, onNeedAuth }: Props) {
           importantForAutofill="no"
         />
 
+        {stampQuery.data?.enabled && freeAvailable ? (
+          <>
+            <Text style={styles.section}>{stampQuery.data.title}</Text>
+            <Pressable
+              style={[
+                styles.toggle,
+                { marginTop: 4, flex: 0 },
+                redeemFreeDrink && styles.toggleOn,
+              ]}
+              onPress={() => setRedeemFreeDrink((v) => !v)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: redeemFreeDrink }}
+            >
+              <Text
+                style={[
+                  styles.toggleText,
+                  redeemFreeDrink && styles.toggleTextOn,
+                ]}
+              >
+                {redeemFreeDrink
+                  ? 'Free drink applied to this order'
+                  : 'Redeem free drink on this order'}
+              </Text>
+            </Pressable>
+          </>
+        ) : null}
+
         <Text style={styles.section}>{t('checkout.summary')}</Text>
         <Card>
           {items.map((item) => (
@@ -354,6 +403,12 @@ export function CheckoutScreen({ onSuccess, onNeedAuth }: Props) {
             <Text style={styles.meta}>{t('cart.subtotal')}</Text>
             <Text style={styles.meta}>{formatPrice(subtotal)}</Text>
           </View>
+          {freeDiscount > 0 ? (
+            <View style={styles.line}>
+              <Text style={styles.meta}>Stamp card free drink</Text>
+              <Text style={styles.meta}>-{formatPrice(freeDiscount)}</Text>
+            </View>
+          ) : null}
           <View style={styles.line}>
             <Text style={styles.meta}>{t('cart.tax')}</Text>
             <Text style={styles.meta}>{formatPrice(tax)}</Text>

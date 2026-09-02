@@ -25,6 +25,7 @@ export type {
   Product,
   ProductCustomizationLink,
   SelectionType,
+  StampCardStatus,
   User,
 } from './shared';
 
@@ -197,6 +198,7 @@ export function mapUser(raw: Record<string, unknown>): User {
 
 export function mapAppSettings(raw: Record<string, unknown>): AppSettings {
   const pickup = (raw.pickup as Record<string, unknown>) ?? {};
+  const stamp = (raw.stampCard as Record<string, unknown>) ?? {};
   return {
     currency: (raw.currency as string) ?? 'EUR',
     taxRate: Number(raw.taxRate ?? 0),
@@ -205,6 +207,14 @@ export function mapAppSettings(raw: Record<string, unknown>): AppSettings {
       typeof raw.homeBannerImageUrl === 'string' && raw.homeBannerImageUrl
         ? raw.homeBannerImageUrl
         : null,
+    stampCard: {
+      enabled: stamp.enabled !== false,
+      stampsRequired: Number(stamp.stampsRequired ?? 8),
+      title: (stamp.title as string) ?? 'Stamp Card',
+      subtitle:
+        (stamp.subtitle as string) ??
+        'Collect 8 drinks on the app — the 9th is free',
+    },
     pickup: {
       openTime: (pickup.openTime as string) ?? '08:00',
       closeTime: (pickup.closeTime as string) ?? '18:00',

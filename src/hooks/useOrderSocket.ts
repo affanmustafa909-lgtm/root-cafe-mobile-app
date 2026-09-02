@@ -33,6 +33,7 @@ export function useOrderSocket(enabled = true) {
 
       const invalidate = (payload?: { id?: string }) => {
         void queryClient.invalidateQueries({ queryKey: ['orders'] });
+        void queryClient.invalidateQueries({ queryKey: ['stamp-card'] });
         if (payload?.id) {
           void queryClient.invalidateQueries({ queryKey: ['order', payload.id] });
         } else {
@@ -43,6 +44,9 @@ export function useOrderSocket(enabled = true) {
       socket.on('order.status_changed', invalidate);
       socket.on('order.updated', invalidate);
       socket.on('order.payment_updated', invalidate);
+      socket.on('loyalty.stamp_updated', () => {
+        void queryClient.invalidateQueries({ queryKey: ['stamp-card'] });
+      });
     })();
 
     return () => {

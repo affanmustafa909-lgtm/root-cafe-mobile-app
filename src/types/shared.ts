@@ -125,6 +125,12 @@ export interface AppSettings {
   taxRate: number;
   timezone: string;
   homeBannerImageUrl?: string | null;
+  stampCard?: {
+    enabled: boolean;
+    stampsRequired: number;
+    title: string;
+    subtitle: string;
+  };
   pickup: {
     openTime: string;
     closeTime: string;
@@ -132,6 +138,17 @@ export interface AppSettings {
     maxDaysAhead: number;
     asapEstimateMinutes: number | null;
   };
+}
+
+export interface StampCardStatus {
+  enabled: boolean;
+  stampsRequired: number;
+  title: string;
+  subtitle: string;
+  stamps: number;
+  stampsTowardReward: number;
+  freeDrinkAvailable: boolean;
+  freeDrinksEarned: number;
 }
 
 export interface CreateOrderItemPayload {
@@ -145,5 +162,6 @@ export interface CreateOrderPayload {
   pickupDate?: string;
   pickupTime?: string;
   notes?: string;
+  redeemFreeDrink?: boolean;
   items: CreateOrderItemPayload[];
 }

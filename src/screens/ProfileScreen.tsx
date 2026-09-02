@@ -1,6 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   Alert,
@@ -12,13 +12,16 @@ import {
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useFocusEffect } from '@react-navigation/native';
 import { z } from 'zod';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Screen } from '../components/Screen';
+import { StampCardView } from '../components/StampCardView';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { useToast } from '../components/Toast';
 import { fonts, radii, spacing } from '../constants/theme';
+import { useStampCard } from '../hooks/useMenu';
 import { mediaUrl } from '../services/api';
 import { useAuth } from '../store/AuthContext';
 import { useAppTheme } from '../store/ThemeContext';
@@ -52,8 +55,19 @@ export function ProfileScreen({ onOpenSettings, onSignIn }: Props) {
   const { user, isAuthenticated, updateProfile, uploadAvatar, clearAvatar } =
     useAuth();
   const { colors, mode } = useAppTheme();
+  const stampCard = useStampCard(isAuthenticated);
   const [saving, setSaving] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!isAuthenticated) return;
+      // Soft refresh only when data is stale — avoid full UI reload every visit.
+      if (stampCard.isStale) {
+        void stampCard.refetch();
+      }
+    }, [isAuthenticated, stampCard.isStale, stampCard.refetch]),
+  );
   const {
     control,
     handleSubmit,
@@ -428,6 +442,23 @@ export function ProfileScreen({ onOpenSettings, onSignIn }: Props) {
             />
           </View>
         </View>
+
+        {isAuthenticated && stampCard.data?.enabled ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Rewards</Text>
+            <StampCardView card={stampCard.data} />
+          </View>
+        ) : isAuthenticated && stampCard.isPending ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Rewards</Text>
+            <View
+              style={[
+                styles.panel,
+                { minHeight: 120, opacity: 0.6 },
+              ]}
+            />
+          </View>
+        ) : null}
       </ScrollView>
     </Screen>
   );

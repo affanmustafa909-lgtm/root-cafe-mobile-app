@@ -22,7 +22,12 @@ import { hasProductImage } from '../assets/products/productImages';
 import { Screen } from '../components/Screen';
 import { ErrorState, LoadingState } from '../components/States';
 import { fonts } from '../constants/theme';
-import { useCakeOfDay, useCategories, useProducts, useAppSettings } from '../hooks/useMenu';
+import {
+  useCakeOfDay,
+  useCategories,
+  useProducts,
+  useAppSettings,
+} from '../hooks/useMenu';
 import { mediaUrl } from '../services/api';
 import { useAuth } from '../store/AuthContext';
 import { useAppTheme } from '../store/ThemeContext';
@@ -250,7 +255,11 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
   const gridItems = visible.slice(0, GRID_PREVIEW);
   const cakeProductId = cake.data?.productId || cake.data?.product?.id;
 
-  if (categories.isLoading || products.isLoading) {
+  // Keep showing cached menu instead of a full-screen spinner on revisit.
+  if (
+    (categories.isPending && !categories.data) ||
+    (products.isPending && !products.data)
+  ) {
     return (
       <Screen backgroundColor={cafe.bg}>
         <LoadingState message={t('common.loading')} />
@@ -258,7 +267,11 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
     );
   }
 
-  if (categories.isError || products.isError) {
+  // Only hard-fail when we have no data at all (keep UI if cached data exists).
+  if (
+    (categories.isError && !categories.data) ||
+    (products.isError && !products.data)
+  ) {
     return (
       <Screen backgroundColor={cafe.bg}>
         <ErrorState
@@ -267,6 +280,7 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
             void categories.refetch();
             void products.refetch();
             void cake.refetch();
+            void settings.refetch();
           }}
           retryLabel={t('common.retry')}
         />
@@ -316,7 +330,7 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
           </View>
         </FadeIn>
 
-        <FadeIn delay={40}>
+        <FadeIn delay={0}>
           <View style={styles.searchRow}>
             <View style={styles.searchBox}>
               <Feather name="search" size={16} color={cafe.textMuted} />
@@ -350,7 +364,7 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
           </View>
         </FadeIn>
 
-        <FadeIn delay={80}>
+        <FadeIn delay={0}>
           <Pressable
             style={styles.banner}
             onPress={() =>

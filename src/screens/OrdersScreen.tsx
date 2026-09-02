@@ -6,7 +6,6 @@ import { Screen } from '../components/Screen';
 import { EmptyState, ErrorState, LoadingState } from '../components/States';
 import { radii, spacing } from '../constants/theme';
 import { useOrders } from '../hooks/useMenu';
-import { useOrderSocket } from '../hooks/useOrderSocket';
 import { useAuth } from '../store/AuthContext';
 import { useAppTheme } from '../store/ThemeContext';
 import { formatPrice } from '../utils/pricing';
@@ -21,8 +20,7 @@ export function OrdersScreen({ onOpenOrder, onTrackOrder }: Props) {
   const { colors, typography } = useAppTheme();
   const { isAuthenticated } = useAuth();
   const [tab, setTab] = useState<'active' | 'past'>('active');
-  useOrderSocket(isAuthenticated);
-  const { data, isLoading, isError, refetch } = useOrders(isAuthenticated);
+  const { data, isError, refetch, isPending } = useOrders(isAuthenticated);
 
   const styles = useMemo(
     () =>
@@ -72,7 +70,7 @@ export function OrdersScreen({ onOpenOrder, onTrackOrder }: Props) {
     };
   }, [data]);
 
-  if (isLoading) {
+  if (isPending && !data) {
     return (
       <Screen>
         <LoadingState message={t('common.loading')} />
