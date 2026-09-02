@@ -9,85 +9,106 @@ type Props = {
   card: StampCardStatus;
 };
 
-/** Compact loyalty punch card — espresso header + clean stamp grid. */
+/** Premium Roots Café loyalty punch card. */
 export function StampCardView({ card }: Props) {
   const { mode } = useAppTheme();
   const { width: windowWidth } = useWindowDimensions();
+
   const slots = Math.max(1, Math.min(12, card.stampsRequired));
   const filled = Math.min(card.stampsTowardReward, slots);
   const remaining = Math.max(0, slots - filled);
   const columns = slots <= 6 ? 3 : 4;
-  const pad = 20;
-  const gap = 12;
-  const usable = Math.min(windowWidth, 420) - pad * 2 - 8;
-  const punch = Math.min(54, Math.floor((usable - gap * (columns - 1)) / columns));
+  const gap = 11;
+  const side = 18;
+  const usable = Math.min(windowWidth - 48, 360) - side * 2;
+  const punch = Math.min(52, Math.floor((usable - gap * (columns - 1)) / columns));
+  const progress = slots > 0 ? filled / slots : 0;
 
-  const isDark = mode === 'dark';
-  const headerBg = isDark ? '#12100E' : palette.ink;
-  const bodyBg = isDark ? '#1A1714' : '#FFFCFA';
-  const border = isDark ? 'rgba(232,223,212,0.12)' : 'rgba(26,21,18,0.1)';
-  const ink = isDark ? palette.creamDeep : palette.ink;
-  const muted = isDark ? 'rgba(232,223,212,0.62)' : '#7A6B5D';
-  const bean = isDark ? palette.sky : '#5C4033';
-  const emptyFill = isDark ? 'rgba(255,255,255,0.04)' : '#F3EEE6';
-  const emptyStroke = isDark ? 'rgba(232,223,212,0.2)' : '#D2C4B4';
-  const onFill = isDark ? 'rgba(168,197,212,0.18)' : 'rgba(92,64,51,0.1)';
+  const dark = mode === 'dark';
+  const cream = '#F7F1E8';
+  const ink = dark ? cream : '#1C1410';
+  const bean = dark ? '#B7D0DC' : '#6B4A34';
+  const surface = dark ? '#14110F' : cream;
+  const shell = dark ? '#0E0C0B' : '#FFFFFF';
+  const line = dark ? 'rgba(247,241,232,0.12)' : 'rgba(28,20,16,0.08)';
+  const muted = dark ? 'rgba(247,241,232,0.62)' : '#7D6A58';
+  const empty = dark ? 'rgba(255,255,255,0.05)' : '#EFE6DA';
+  const emptyBorder = dark ? 'rgba(247,241,232,0.18)' : '#D7C7B4';
+  const filledBg = dark ? 'rgba(183,208,220,0.16)' : 'rgba(107,74,52,0.12)';
 
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        card: {
-          borderRadius: 18,
+        wrap: {
+          borderRadius: 20,
           overflow: 'hidden',
+          backgroundColor: shell,
           borderWidth: 1,
-          borderColor: border,
-          backgroundColor: bodyBg,
+          borderColor: line,
         },
-        header: {
-          backgroundColor: headerBg,
-          paddingHorizontal: 18,
+        top: {
+          backgroundColor: surface,
+          paddingHorizontal: side,
           paddingTop: 16,
           paddingBottom: 14,
-          gap: 4,
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderBottomColor: line,
+          gap: 8,
+        },
+        brandRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
         },
         brand: {
           fontFamily: fonts.sansSemi,
           fontSize: 10,
-          letterSpacing: 1.8,
+          letterSpacing: 1.6,
           textTransform: 'uppercase',
-          color: isDark ? palette.sky : '#C9B8A4',
+          color: bean,
         },
-        headerRow: {
-          flexDirection: 'row',
-          alignItems: 'flex-end',
-          justifyContent: 'space-between',
-          gap: 12,
+        pill: {
+          paddingHorizontal: 10,
+          paddingVertical: 4,
+          borderRadius: 999,
+          backgroundColor: dark ? 'rgba(183,208,220,0.14)' : 'rgba(28,20,16,0.06)',
+        },
+        pillText: {
+          fontFamily: fonts.sansBold,
+          fontSize: 12,
+          color: ink,
         },
         title: {
-          flex: 1,
           fontFamily: fonts.display,
-          fontSize: 22,
-          lineHeight: 28,
-          color: '#FAFAF8',
-        },
-        counter: {
-          fontFamily: fonts.sansBold,
-          fontSize: 15,
-          color: '#FAFAF8',
-          opacity: 0.92,
+          fontSize: 24,
+          lineHeight: 30,
+          color: ink,
+          letterSpacing: -0.2,
         },
         subtitle: {
-          marginTop: 2,
           fontFamily: fonts.sans,
-          fontSize: 12,
-          lineHeight: 17,
-          color: 'rgba(250,250,248,0.68)',
+          fontSize: 13,
+          lineHeight: 18,
+          color: muted,
+        },
+        track: {
+          height: 5,
+          borderRadius: 999,
+          backgroundColor: empty,
+          overflow: 'hidden',
+          marginTop: 2,
+        },
+        trackFill: {
+          height: '100%',
+          borderRadius: 999,
+          backgroundColor: bean,
         },
         body: {
-          paddingHorizontal: pad,
-          paddingTop: 18,
+          paddingHorizontal: side,
+          paddingTop: 16,
           paddingBottom: 16,
           gap: 14,
+          backgroundColor: shell,
         },
         grid: {
           flexDirection: 'row',
@@ -102,24 +123,22 @@ export function StampCardView({ card }: Props) {
           alignItems: 'center',
           justifyContent: 'center',
           borderWidth: 1.5,
-          borderColor: emptyStroke,
-          backgroundColor: emptyFill,
+          borderColor: emptyBorder,
+          backgroundColor: empty,
         },
         stampOn: {
           borderColor: bean,
-          backgroundColor: onFill,
+          backgroundColor: filledBg,
         },
-        stampIndex: {
+        num: {
           fontFamily: fonts.sansSemi,
-          fontSize: 11,
-          color: emptyStroke,
+          fontSize: 12,
+          color: muted,
         },
         footer: {
           alignItems: 'center',
-          gap: 6,
-          paddingTop: 2,
         },
-        status: {
+        hint: {
           fontFamily: fonts.sans,
           fontSize: 13,
           lineHeight: 18,
@@ -128,19 +147,19 @@ export function StampCardView({ card }: Props) {
         },
         reward: {
           width: '100%',
-          borderRadius: 12,
+          borderRadius: 14,
           paddingVertical: 12,
           paddingHorizontal: 14,
-          backgroundColor: isDark ? 'rgba(243,142,34,0.14)' : '#FFF4E8',
+          backgroundColor: dark ? 'rgba(243,142,34,0.14)' : '#FFF3E5',
           borderWidth: 1,
           borderColor: palette.orange,
-          alignItems: 'center',
           gap: 2,
         },
         rewardTitle: {
           fontFamily: fonts.sansBold,
           fontSize: 14,
           color: ink,
+          textAlign: 'center',
         },
         rewardHint: {
           fontFamily: fonts.sans,
@@ -149,68 +168,55 @@ export function StampCardView({ card }: Props) {
           color: muted,
           textAlign: 'center',
         },
-        track: {
-          width: '100%',
-          height: 4,
-          borderRadius: 999,
-          backgroundColor: emptyFill,
-          overflow: 'hidden',
-        },
-        trackFill: {
-          height: '100%',
-          borderRadius: 999,
-          backgroundColor: bean,
-        },
       }),
     [
       bean,
-      bodyBg,
-      border,
-      emptyFill,
-      emptyStroke,
+      dark,
+      empty,
+      emptyBorder,
+      filledBg,
       gap,
-      headerBg,
       ink,
-      isDark,
+      line,
       muted,
-      onFill,
-      pad,
       punch,
+      shell,
+      side,
+      surface,
     ],
   );
 
   if (!card.enabled) return null;
 
-  const progress = slots > 0 ? filled / slots : 0;
-
   return (
-    <View style={styles.card} accessibilityRole="summary">
-      <View style={styles.header}>
-        <Text style={styles.brand}>Roots Café</Text>
-        <View style={styles.headerRow}>
-          <Text style={styles.title} numberOfLines={1}>
-            {card.title}
-          </Text>
-          <Text style={styles.counter}>
-            {filled}/{slots}
-          </Text>
+    <View style={styles.wrap} accessibilityRole="summary">
+      <View style={styles.top}>
+        <View style={styles.brandRow}>
+          <Text style={styles.brand}>Roots Café Rewards</Text>
+          <View style={styles.pill}>
+            <Text style={styles.pillText}>
+              {filled}/{slots}
+            </Text>
+          </View>
         </View>
+        <Text style={styles.title} numberOfLines={1}>
+          {card.title}
+        </Text>
         <Text style={styles.subtitle} numberOfLines={2}>
           {card.subtitle}
         </Text>
-      </View>
-
-      <View style={styles.body}>
         <View style={styles.track}>
           <View style={[styles.trackFill, { width: `${Math.round(progress * 100)}%` }]} />
         </View>
+      </View>
 
+      <View style={styles.body}>
         <View style={styles.grid}>
           {Array.from({ length: slots }, (_, i) => {
             const on = i < filled;
             return (
               <View
-                key={`s-${i}`}
+                key={`stamp-${i}`}
                 style={[styles.stamp, on && styles.stampOn]}
                 accessibilityLabel={
                   on ? `Stamp ${i + 1} collected` : `Stamp ${i + 1} empty`
@@ -219,7 +225,7 @@ export function StampCardView({ card }: Props) {
                 {on ? (
                   <CoffeeBean color={bean} size={punch < 46 ? 'sm' : 'md'} />
                 ) : (
-                  <Text style={styles.stampIndex}>{i + 1}</Text>
+                  <Text style={styles.num}>{i + 1}</Text>
                 )}
               </View>
             );
@@ -229,18 +235,18 @@ export function StampCardView({ card }: Props) {
         <View style={styles.footer}>
           {card.freeDrinkAvailable ? (
             <View style={styles.reward}>
-              <Text style={styles.rewardTitle}>Free drink ready</Text>
+              <Text style={styles.rewardTitle}>Free drink unlocked</Text>
               <Text style={styles.rewardHint}>
-                Turn on redeem at checkout on your next order.
+                Enable redeem at checkout on your next order.
               </Text>
             </View>
           ) : (
-            <Text style={styles.status}>
+            <Text style={styles.hint}>
               {remaining <= 0
-                ? 'Keep collecting — reward unlocks soon.'
+                ? 'Almost there — keep collecting.'
                 : remaining === 1
-                  ? '1 more collected order for a free drink.'
-                  : `${remaining} more collected orders for a free drink.`}
+                  ? '1 more order for a free drink.'
+                  : `${remaining} more orders for a free drink.`}
             </Text>
           )}
         </View>
