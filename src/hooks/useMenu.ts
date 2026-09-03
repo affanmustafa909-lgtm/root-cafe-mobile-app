@@ -49,6 +49,18 @@ export function useCakeOfDay() {
   });
 }
 
+export function usePopularSales() {
+  return useQuery({
+    queryKey: ['products-popular'],
+    queryFn: () => menuApi.popularSales(100),
+    staleTime: 2 * 60_000,
+    gcTime: 15 * 60_000,
+    refetchOnMount: false,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: false,
+  });
+}
+
 export function useOnboarding() {
   return useQuery({
     queryKey: ['onboarding'],

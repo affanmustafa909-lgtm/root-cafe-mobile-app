@@ -33,6 +33,15 @@ export const menuApi = {
   categories: categoryApi.list,
   products: productApi.list,
   product: productApi.get,
+  async popularSales(
+    limit = 100,
+  ): Promise<{ productId: string; quantitySold: number }[]> {
+    const { data } = await api.get<{ productId: string; quantitySold: number }[]>(
+      '/products/popular',
+      { params: { limit } },
+    );
+    return data ?? [];
+  },
   async cakeOfDay(date?: string): Promise<CakeOfTheDay | null> {
     const { data } = await api.get<Record<string, unknown> | null>(
       '/cake-of-day',

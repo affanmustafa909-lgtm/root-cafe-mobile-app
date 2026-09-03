@@ -25,6 +25,7 @@ import { fonts } from '../constants/theme';
 import {
   useCakeOfDay,
   useCategories,
+  usePopularSales,
   useProducts,
   useAppSettings,
 } from '../hooks/useMenu';
@@ -49,6 +50,7 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
   const { cafe, colors, cafeShadow } = useAppTheme();
   const categories = useCategories();
   const products = useProducts();
+  const popularSales = usePopularSales();
   const cake = useCakeOfDay();
   const settings = useAppSettings();
   const [categoryId, setCategoryId] = useState<string | undefined>();
@@ -209,6 +211,18 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
         },
         gridItem: { width: '50%', paddingHorizontal: 7 },
         list: { gap: 0 },
+        seeAllFooter: {
+          marginTop: 8,
+          marginBottom: 4,
+          alignSelf: 'center',
+          paddingVertical: 12,
+          paddingHorizontal: 20,
+        },
+        seeAllFooterText: {
+          color: cafe.olive,
+          fontFamily: fonts.sansSemi,
+          fontSize: 15,
+        },
       }),
     [cafe, colors, cafeShadow],
   );
@@ -223,6 +237,14 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
   const displayName =
     user?.name?.trim() ||
     (user?.email ? user.email.split('@')[0] : t('home.guest'));
+
+  const salesRank = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const row of popularSales.data ?? []) {
+      map.set(row.productId, Number(row.quantitySold) || 0);
+    }
+    return map;
+  }, [popularSales.data]);
 
   const visible = useMemo(() => {
     const list = (products.data ?? []).filter(
@@ -240,17 +262,17 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
         (p.description ?? '').toLowerCase().includes(q);
       return inCategory && inSearch;
     });
-    // Sort by filter preference
     return [...filtered].sort((a, b) => {
       if (sort === 'priceAsc') return Number(a.price) - Number(b.price);
       if (sort === 'priceDesc') return Number(b.price) - Number(a.price);
       if (sort === 'name') return a.name.localeCompare(b.name);
-      const ta = a.createdAt ? Date.parse(a.createdAt) : 0;
-      const tb = b.createdAt ? Date.parse(b.createdAt) : 0;
-      if (tb !== ta) return tb - ta;
+      // Default / newest: most sold first, then catalog order.
+      const sa = salesRank.get(a.id) ?? 0;
+      const sb = salesRank.get(b.id) ?? 0;
+      if (sb !== sa) return sb - sa;
       return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
     });
-  }, [products.data, categoryId, search, sort]);
+  }, [products.data, categoryId, search, sort, salesRank]);
 
   const gridItems = visible.slice(0, GRID_PREVIEW);
   const cakeProductId = cake.data?.productId || cake.data?.product?.id;
@@ -386,8 +408,9 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
           <Pressable
             onPress={() => onOpenMenu(categoryId)}
             accessibilityRole="button"
+            accessibilityLabel={t('home.viewMenu')}
           >
-            <Text style={styles.seeAll}>{t('home.seeAll')}</Text>
+            <Text style={styles.seeAll}>{t('home.viewMenu')}</Text>
           </Pressable>
         </View>
         <CategoryChipBar
@@ -461,6 +484,17 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
             ))}
           </View>
         )}
+
+        {visible.length > 0 ? (
+          <Pressable
+            style={styles.seeAllFooter}
+            onPress={() => onOpenMenu(categoryId)}
+            accessibilityRole="button"
+            accessibilityLabel={t('home.seeAll')}
+          >
+            <Text style={styles.seeAllFooterText}>{t('home.seeAll')}</Text>
+          </Pressable>
+        ) : null}
       </ScrollView>
 
       <HomeFilterSheet
