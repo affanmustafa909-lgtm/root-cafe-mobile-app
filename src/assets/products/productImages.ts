@@ -26,9 +26,15 @@ const BY_NAME: Record<string, ImageSourcePropType> = {
   'iced spanish latte': require('./iced-spanish-latte.jpg'),
   'iced chai latte': require('./iced-chai-latte.jpg'),
   'iced lavender latte': require('./iced-lavender-latte.jpg'),
+  'iced hazelnut latte': require('./iced-hazelnut-latte.jpg'),
+  'iced coconut vanilla': require('./iced-coconut-vanilla.jpg'),
   'iced tea': require('./iced-tea.jpg'),
   juice: require('./juice.jpg'),
   mojito: require('./mojito.jpg'),
+  'mango mojito': require('./mango-mojito.jpg'),
+  'strawberry mojito': require('./strawberry-mojito.jpg'),
+  'blue coconut mojito': require('./blue-coconut-mojito.jpg'),
+  'mango strawberry mojito': require('./mango-strawberry-mojito.jpg'),
   americano: require('./americano.jpg'),
   'iced latte': require('./iced-latte.jpg'),
   'cold brew': require('./cold-brew.jpg'),
@@ -42,6 +48,7 @@ const BY_NAME: Record<string, ImageSourcePropType> = {
   'matcha latte': require('./matcha-latte.jpg'),
   'iced matcha': require('./iced-matcha.jpg'),
   'cloudy matcha': require('./cloudy-matcha.jpg'),
+  'iced cloudy matcha': require('./iced-cloudy-matcha.jpg'),
   'iced mango matcha': require('./mango-matcha.jpg'),
   'iced strawberry matcha': require('./strawberry-matcha.jpg'),
   'lavender matcha': require('./lavender-matcha.jpg'),
@@ -52,6 +59,8 @@ const BY_NAME: Record<string, ImageSourcePropType> = {
   'strawberry frappe': require('./strawberry-frappe.jpg'),
   'vanilla frappe': require('./vanilla-frappe.jpg'),
   'cookies frappe': require('./cookies-frappe.jpg'),
+  'kinder bueno frappe': require('./kinder-bueno-frappe.jpg'),
+  'popcorn frappe': require('./popcorn-frappe.jpg'),
   'white choco frappe': require('./white-choco-frappe.jpg'),
   'mocha frappe': require('./mocha-frappe.jpg'),
   mocha: require('./mocha.jpg'),
@@ -64,13 +73,19 @@ const BY_NAME: Record<string, ImageSourcePropType> = {
   'lotus milkshake': require('./lotus-milkshake.jpg'),
   'mango milkshake': require('./mango-milkshake.jpg'),
 
+  // Protein
+  'protein oreo': require('./protein-oreo.jpg'),
+  'protein caramel': require('./protein-caramel.jpg'),
+  'protein biscoff': require('./protein-biscoff.jpg'),
+  'protein strawberry': require('./protein-strawberry.jpg'),
+
   affogato: require('./affogato.jpg'),
 };
 
 const MATCHA_HOT = require('./matcha-latte.jpg');
 const MATCHA_COLD = require('./iced-matcha.jpg');
-const PROTEIN_HOT = require('./vanilla-milkshake.jpg');
-const PROTEIN_COLD = require('./chocolate-milkshake.jpg');
+const PROTEIN_HOT = require('./protein-biscoff.jpg');
+const PROTEIN_COLD = require('./protein-oreo.jpg');
 
 const TEMPERATURE_BY_PRODUCT: Record<
   string,
