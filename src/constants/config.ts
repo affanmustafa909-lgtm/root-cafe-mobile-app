@@ -9,6 +9,9 @@ export const STORAGE_KEYS = {
   theme: 'roots_customer_theme',
 } as const;
 
+/** Bump when cover / onboarding slides change so users see Get Started again once. */
+export const WELCOME_VERSION = '2';
+
 const LIVE_API =
   'https://backend-root-cafe-main-production.up.railway.app';
 
@@ -16,7 +19,9 @@ function hostForDevice(url: string): string {
   if (Platform.OS !== 'android') return url;
   // Emulator loopback helpers — never rewrite the live Railway host.
   if (url.includes('railway.app') || url.startsWith('https://')) return url;
-  return url.replace('://localhost', '://10.0.2.2');
+  return url
+    .replace('://localhost', '://10.0.2.2')
+    .replace('://127.0.0.1', '://10.0.2.2');
 }
 
 export const API_URL = hostForDevice(

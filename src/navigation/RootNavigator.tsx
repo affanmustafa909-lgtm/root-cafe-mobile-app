@@ -11,7 +11,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
-import { STORAGE_KEYS } from '../constants/config';
+import { STORAGE_KEYS, WELCOME_VERSION } from '../constants/config';
 import { OfflineBanner } from '../components/OfflineBanner';
 import { fonts, radii } from '../constants/theme';
 import { registerForPushNotifications } from '../hooks/usePushNotifications';
@@ -329,7 +329,7 @@ export function RootNavigator() {
 
   useEffect(() => {
     void AsyncStorage.getItem(STORAGE_KEYS.welcomeSeen).then((value) => {
-      const seen = value === '1';
+      const seen = value === WELCOME_VERSION;
       setOnboardingDone(seen);
       if (!seen) setShowSplash(true);
     });
@@ -341,7 +341,7 @@ export function RootNavigator() {
   }, []);
 
   const finishWelcome = useCallback(() => {
-    void AsyncStorage.setItem(STORAGE_KEYS.welcomeSeen, '1').finally(() => {
+    void AsyncStorage.setItem(STORAGE_KEYS.welcomeSeen, WELCOME_VERSION).finally(() => {
       setShowWelcome(false);
       setOnboardingDone(true);
       setShowSplash(false);

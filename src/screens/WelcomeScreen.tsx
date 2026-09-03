@@ -22,6 +22,7 @@ const ORANGE = '#FAFAF8';
 const AUTO_MS = 2500;
 const SHADOW_STEPS = [0.02, 0.05, 0.1, 0.16, 0.24, 0.34, 0.46];
 const FALLBACK_SLIDES = [
+  require('../../assets/welcome/cafe-snow.jpg'),
   require('../../assets/welcome/brew.png'),
   require('../../assets/welcome/joy.png'),
 ];
