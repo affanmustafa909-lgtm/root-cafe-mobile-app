@@ -12,10 +12,13 @@ export const PREFERRED_OPTION: Record<string, string> = {
   Size: 'Medium',
   Milk: 'Cow Milk',
   Syrups: 'No Syrup',
+  'Whipped Cream': 'None',
 };
 
 export function defaultTemperatureForProduct(productName?: string | null): string {
-  if (productName && /iced/i.test(productName)) return 'Cold';
+  if (!productName) return 'Hot';
+  // Protein + iced drinks open on Cold so the cold photo shows first.
+  if (/protein|iced/i.test(productName)) return 'Cold';
   return 'Hot';
 }
 

@@ -34,7 +34,13 @@ import {
 } from '../utils/customization';
 import { calcLineTotal, formatPrice, productSale } from '../utils/pricing';
 
-const GROUP_ORDER = ['Temperature', 'Size', 'Milk', 'Syrups'];
+const GROUP_ORDER = [
+  'Temperature',
+  'Size',
+  'Milk',
+  'Syrups',
+  'Whipped Cream',
+];
 
 type Props = {
   productId: string;
@@ -110,23 +116,20 @@ export function ProductDetailsScreen({
           color: colors.text,
         },
         groupRow: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 10,
-          marginBottom: 14,
+          marginBottom: 16,
+          gap: 8,
         },
         groupTitle: {
           ...typography.bodyBold,
           color: colors.text,
           fontSize: 15,
-          minWidth: 72,
-          maxWidth: 88,
+          lineHeight: 20,
         },
         pills: {
-          flex: 1,
           flexDirection: 'row',
           flexWrap: 'wrap',
-          justifyContent: 'flex-end',
+          justifyContent: 'flex-start',
+          alignItems: 'center',
           gap: 8,
         },
         option: {
@@ -136,31 +139,27 @@ export function ProductDetailsScreen({
           borderWidth: 1,
           borderColor: 'transparent',
           borderRadius: radii.full,
-          paddingHorizontal: 12,
-          paddingVertical: 8,
-          minHeight: 36,
-          gap: 4,
+          paddingHorizontal: 14,
+          paddingVertical: 9,
+          minHeight: 38,
+          maxWidth: '100%',
           backgroundColor: colors.panelElevated,
         },
-        optionFlex: { flexGrow: 1, flexBasis: 0 },
         optionSelected: {
           backgroundColor: colors.coralMuted,
           borderColor: colors.coral,
         },
         optionDisabled: { opacity: 0.4 },
-        optionName: {
+        optionLabel: {
           ...typography.body,
           color: colors.textMuted,
           fontSize: 13,
+          lineHeight: 18,
+          flexShrink: 1,
         },
-        optionNameOn: {
+        optionLabelOn: {
           color: colors.coral,
           fontFamily: typography.bodyBold.fontFamily,
-        },
-        optionPrice: {
-          ...typography.caption,
-          color: colors.sky,
-          fontSize: 11,
         },
         descBlock: { marginTop: spacing.sm, gap: 8 },
         descHeading: { ...typography.bodyBold, color: colors.text },
@@ -254,9 +253,15 @@ export function ProductDetailsScreen({
     selections,
   );
 
-  const temperatureSelection = selectedOptions.find(
-    (o) => o.groupName === 'Temperature',
-  )?.optionName as 'Hot' | 'Cold' | undefined;
+  const temperatureSelection = (() => {
+    const raw = selectedOptions.find(
+      (o) => o.groupName?.toLowerCase() === 'temperature',
+    )?.optionName;
+    if (!raw) return undefined;
+    if (/^cold$/i.test(raw)) return 'Cold' as const;
+    if (/^hot$/i.test(raw)) return 'Hot' as const;
+    return undefined;
+  })();
 
   const displayImage =
     productImageForTemperature(
@@ -267,6 +272,8 @@ export function ProductDetailsScreen({
       uri,
     ) ??
     (uri ? { uri } : localProductImage(data.name));
+
+  const imageKey = `${data.id}-${temperatureSelection ?? 'default'}`;
 
   const lineTotal = calcLineTotal(data.price, selectedOptions, quantity);
 
@@ -338,9 +345,13 @@ export function ProductDetailsScreen({
         {displayImage ? (
           <View style={styles.hero}>
             <Image
+              key={imageKey}
               source={displayImage}
               style={styles.image}
               contentFit="cover"
+              cachePolicy="memory-disk"
+              recyclingKey={imageKey}
+              transition={120}
             />
           </View>
         ) : null}
@@ -355,10 +366,11 @@ export function ProductDetailsScreen({
 
         {groups.map((group) => {
           const options = group.options.filter((o) => o.isActive !== false);
-          const compactRow = options.length <= 3;
           return (
             <View key={group.id} style={styles.groupRow}>
-              <Text style={styles.groupTitle}>{group.name}</Text>
+              <Text style={styles.groupTitle} numberOfLines={1}>
+                {group.name}
+              </Text>
               <View style={styles.pills}>
                 {options.map((option) => {
                   const selected = (selections[group.id] ?? []).includes(
@@ -368,6 +380,10 @@ export function ProductDetailsScreen({
                   const extra = Number(
                     option.price || option.additionalPrice || 0,
                   );
+                  const label =
+                    extra > 0
+                      ? `${option.name}  +${formatPrice(extra)}`
+                      : option.name;
                   return (
                     <Pressable
                       key={option.id}
@@ -379,7 +395,6 @@ export function ProductDetailsScreen({
                       }
                       style={[
                         styles.option,
-                        compactRow && styles.optionFlex,
                         selected && styles.optionSelected,
                         unavailable && styles.optionDisabled,
                       ]}
@@ -388,18 +403,14 @@ export function ProductDetailsScreen({
                     >
                       <Text
                         style={[
-                          styles.optionName,
-                          selected && styles.optionNameOn,
+                          styles.optionLabel,
+                          selected && styles.optionLabelOn,
                         ]}
                         numberOfLines={1}
+                        ellipsizeMode="tail"
                       >
-                        {option.name}
+                        {label}
                       </Text>
-                      {extra > 0 ? (
-                        <Text style={styles.optionPrice}>
-                          +{formatPrice(extra)}
-                        </Text>
-                      ) : null}
                     </Pressable>
                   );
                 })}

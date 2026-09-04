@@ -82,23 +82,45 @@ const BY_NAME: Record<string, ImageSourcePropType> = {
   affogato: require('./affogato.jpg'),
 };
 
-// Per-product matcha images (hot vs cold variants)
+type TempPair = { hot: ImageSourcePropType; cold: ImageSourcePropType };
+
 const MATCHA_HOT_GENERIC = require('./matcha-latte.jpg');
 const MATCHA_COLD_GENERIC = require('./iced-matcha.jpg');
 
-const TEMPERATURE_BY_PRODUCT: Record<
-  string,
-  { hot: ImageSourcePropType; cold: ImageSourcePropType }
-> = {
-  'menu-matcha-latte': { hot: require('./matcha-latte.jpg'), cold: require('./iced-matcha.jpg') },
-  'menu-iced-matcha': { hot: require('./matcha-latte.jpg'), cold: require('./iced-matcha.jpg') },
-  'menu-cloudy-matcha': { hot: require('./cloudy-matcha.jpg'), cold: require('./iced-cloudy-matcha.jpg') },
-  'menu-iced-cloudy-matcha': { hot: require('./cloudy-matcha.jpg'), cold: require('./iced-cloudy-matcha.jpg') },
-  'menu-iced-mango-matcha': { hot: require('./mango-matcha-hot.jpg'), cold: require('./mango-matcha.jpg') },
-  'menu-iced-strawberry-matcha': { hot: require('./strawberry-matcha-hot.jpg'), cold: require('./strawberry-matcha.jpg') },
-  'menu-lavender-matcha': { hot: require('./lavender-matcha.jpg'), cold: require('./iced-matcha.jpg') },
-  'menu-dirty-matcha': { hot: require('./dirty-matcha.jpg'), cold: require('./iced-matcha.jpg') },
-  // Protein drinks — cold shake as default icon, swap on temperature
+/** Explicit hot/cold pairs by product id. */
+const TEMPERATURE_BY_ID: Record<string, TempPair> = {
+  'menu-matcha-latte': {
+    hot: require('./matcha-latte.jpg'),
+    cold: require('./iced-matcha.jpg'),
+  },
+  'menu-iced-matcha': {
+    hot: require('./matcha-latte.jpg'),
+    cold: require('./iced-matcha.jpg'),
+  },
+  'menu-cloudy-matcha': {
+    hot: require('./cloudy-matcha.jpg'),
+    cold: require('./iced-cloudy-matcha.jpg'),
+  },
+  'menu-iced-cloudy-matcha': {
+    hot: require('./cloudy-matcha.jpg'),
+    cold: require('./iced-cloudy-matcha.jpg'),
+  },
+  'menu-iced-mango-matcha': {
+    hot: require('./mango-matcha-hot.jpg'),
+    cold: require('./mango-matcha.jpg'),
+  },
+  'menu-iced-strawberry-matcha': {
+    hot: require('./strawberry-matcha-hot.jpg'),
+    cold: require('./strawberry-matcha.jpg'),
+  },
+  'menu-lavender-matcha': {
+    hot: require('./lavender-matcha.jpg'),
+    cold: require('./iced-matcha.jpg'),
+  },
+  'menu-dirty-matcha': {
+    hot: require('./dirty-matcha.jpg'),
+    cold: require('./iced-matcha.jpg'),
+  },
   'menu-protein-oreo': {
     hot: require('./protein-oreo.jpg'),
     cold: require('./protein-oreo-cold.jpg'),
@@ -117,6 +139,45 @@ const TEMPERATURE_BY_PRODUCT: Record<
   },
 };
 
+/** Fallback by product name (admin-created / renamed products). */
+const TEMPERATURE_BY_NAME: Record<string, TempPair> = {
+  'matcha latte': TEMPERATURE_BY_ID['menu-matcha-latte'],
+  'iced matcha': TEMPERATURE_BY_ID['menu-iced-matcha'],
+  'cloudy matcha': TEMPERATURE_BY_ID['menu-cloudy-matcha'],
+  'iced cloudy matcha': TEMPERATURE_BY_ID['menu-iced-cloudy-matcha'],
+  'iced mango matcha': TEMPERATURE_BY_ID['menu-iced-mango-matcha'],
+  'iced strawberry matcha': TEMPERATURE_BY_ID['menu-iced-strawberry-matcha'],
+  'lavender matcha': TEMPERATURE_BY_ID['menu-lavender-matcha'],
+  'dirty matcha': TEMPERATURE_BY_ID['menu-dirty-matcha'],
+  'protein oreo': TEMPERATURE_BY_ID['menu-protein-oreo'],
+  'protein caramel': TEMPERATURE_BY_ID['menu-protein-caramel'],
+  'protein biscoff': TEMPERATURE_BY_ID['menu-protein-biscoff'],
+  'protein strawberry': TEMPERATURE_BY_ID['menu-protein-strawberry'],
+};
+
+function resolveTempPair(
+  productId: string,
+  productName: string,
+  categoryId: string | undefined,
+): TempPair | undefined {
+  const byId = TEMPERATURE_BY_ID[productId];
+  if (byId) return byId;
+
+  const byName = TEMPERATURE_BY_NAME[productName.trim().toLowerCase()];
+  if (byName) return byName;
+
+  if (categoryId === 'menu-cat-matcha') {
+    return { hot: MATCHA_HOT_GENERIC, cold: MATCHA_COLD_GENERIC };
+  }
+  if (categoryId === 'menu-cat-protein') {
+    return {
+      hot: require('./protein-biscoff.jpg'),
+      cold: require('./protein-biscoff-cold.jpg'),
+    };
+  }
+  return undefined;
+}
+
 export function localProductImage(
   name?: string | null,
 ): ImageSourcePropType | undefined {
@@ -132,21 +193,15 @@ export function productImageForTemperature(
   remoteUrl?: string | null,
 ): ImageSourcePropType | { uri: string } | undefined {
   const local = localProductImage(productName);
+  const pair = resolveTempPair(productId, productName, categoryId);
 
-  if (!temperature) {
-    return local ?? (remoteUrl ? { uri: remoteUrl } : undefined);
+  if (temperature && pair) {
+    return temperature === 'Cold' ? pair.cold : pair.hot;
   }
 
-  const pair =
-    TEMPERATURE_BY_PRODUCT[productId] ??
-    (categoryId === 'menu-cat-matcha'
-      ? { hot: MATCHA_HOT_GENERIC, cold: MATCHA_COLD_GENERIC }
-      : categoryId === 'menu-cat-protein'
-        ? { hot: require('./protein-biscoff.jpg'), cold: require('./protein-biscoff-cold.jpg') }
-        : undefined);
-
-  if (pair) {
-    return temperature === 'Cold' ? pair.cold : pair.hot;
+  // No temperature chosen yet — prefer cold for protein/matcha list icon if pair exists
+  if (!temperature && pair && /protein|matcha|iced/i.test(productName)) {
+    return /iced|protein/i.test(productName) ? pair.cold : pair.hot;
   }
 
   return local ?? (remoteUrl ? { uri: remoteUrl } : undefined);

@@ -273,8 +273,9 @@ export function ProductCard({ product, onPress, variant = 'list' }: Props) {
         source={imageSource!}
         style={styles.image}
         contentFit="cover"
-        transition={200}
+        transition={100}
         cachePolicy="memory-disk"
+        recyclingKey={product.id}
         accessibilityIgnoresInvertColors
       />
     </Animated.View>
