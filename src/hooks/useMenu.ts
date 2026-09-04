@@ -100,6 +100,13 @@ export function useOrders(enabled = true) {
     queryKey: ['orders'],
     queryFn: () => orderApi.mine(),
     enabled,
+    staleTime: 10_000,
+    gcTime: 10 * 60_000,
+    refetchOnMount: 'always',
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
+    refetchInterval: enabled ? 12_000 : false,
+    retry: 2,
   });
 }
 
@@ -108,6 +115,8 @@ export function useOrder(id: string, options?: { refetchInterval?: number | fals
     queryKey: ['order', id],
     queryFn: () => orderApi.get(id),
     enabled: !!id,
-    refetchInterval: options?.refetchInterval,
+    staleTime: 5_000,
+    refetchOnMount: 'always',
+    refetchInterval: options?.refetchInterval ?? 8_000,
   });
 }

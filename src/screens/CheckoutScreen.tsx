@@ -268,7 +268,13 @@ export function CheckoutScreen({ onSuccess, onNeedAuth }: Props) {
         })),
       });
       clearCart();
+      void qc.invalidateQueries({ queryKey: ['orders'] });
       void qc.invalidateQueries({ queryKey: ['stamp-card'] });
+      // Seed cache immediately so Active Orders shows the new order.
+      void qc.setQueryData(['orders'], (prev: unknown) => {
+        const list = Array.isArray(prev) ? prev : [];
+        return [order, ...list.filter((o: { id?: string }) => o.id !== order.id)];
+      });
       onSuccess(order);
     } catch (error) {
       Alert.alert(t('checkout.orderError'), friendlyError(error));

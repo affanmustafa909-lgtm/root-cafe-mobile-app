@@ -19,9 +19,10 @@ export function useOrderSocket(enabled = true) {
 
       const socket = io(SOCKET_URL, {
         auth: { token },
-        transports: ['websocket'],
+        transports: ['websocket', 'polling'],
         reconnection: true,
-        reconnectionAttempts: 10,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
       });
       socketRef.current = socket;
 
@@ -41,9 +42,15 @@ export function useOrderSocket(enabled = true) {
         }
       };
 
-      socket.on('order.status_changed', invalidate);
-      socket.on('order.updated', invalidate);
-      socket.on('order.payment_updated', invalidate);
+      socket.on('order.status_changed', (payload?: { id?: string }) =>
+        invalidate(payload),
+      );
+      socket.on('order.updated', (payload?: { id?: string }) =>
+        invalidate(payload),
+      );
+      socket.on('order.payment_updated', (payload?: { id?: string }) =>
+        invalidate(payload),
+      );
       socket.on('loyalty.stamp_updated', () => {
         void queryClient.invalidateQueries({ queryKey: ['stamp-card'] });
       });

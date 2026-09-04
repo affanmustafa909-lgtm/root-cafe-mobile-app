@@ -1,5 +1,13 @@
-import React, { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { OrderCard } from '../components/OrderCard';
 import { Screen } from '../components/Screen';
@@ -8,7 +16,14 @@ import { radii, spacing } from '../constants/theme';
 import { useOrders } from '../hooks/useMenu';
 import { useAuth } from '../store/AuthContext';
 import { useAppTheme } from '../store/ThemeContext';
+import type { OrderStatus } from '../types';
 import { formatPrice } from '../utils/pricing';
+
+const ACTIVE_STATUSES = new Set<OrderStatus>([
+  'RECEIVED',
+  'PREPARING',
+  'READY_FOR_PICKUP',
+]);
 
 type Props = {
   onOpenOrder: (orderId: string) => void;
@@ -20,7 +35,14 @@ export function OrdersScreen({ onOpenOrder, onTrackOrder }: Props) {
   const { colors, typography } = useAppTheme();
   const { isAuthenticated } = useAuth();
   const [tab, setTab] = useState<'active' | 'past'>('active');
-  const { data, isError, refetch, isPending } = useOrders(isAuthenticated);
+  const { data, isError, refetch, isPending, isFetching } =
+    useOrders(isAuthenticated);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (isAuthenticated) void refetch();
+    }, [isAuthenticated, refetch]),
+  );
 
   const styles = useMemo(
     () =>
@@ -65,10 +87,21 @@ export function OrdersScreen({ onOpenOrder, onTrackOrder }: Props) {
   const { active, past } = useMemo(() => {
     const list = data ?? [];
     return {
-      active: list.filter((o) => o.status !== 'COMPLETED'),
-      past: list.filter((o) => o.status === 'COMPLETED'),
+      active: list.filter((o) => ACTIVE_STATUSES.has(o.status)),
+      past: list.filter((o) => !ACTIVE_STATUSES.has(o.status)),
     };
   }, [data]);
+
+  if (!isAuthenticated) {
+    return (
+      <Screen>
+        <EmptyState
+          title={t('orders.title')}
+          subtitle={t('orders.emptyActiveHint')}
+        />
+      </Screen>
+    );
+  }
 
   if (isPending && !data) {
     return (
@@ -77,7 +110,7 @@ export function OrdersScreen({ onOpenOrder, onTrackOrder }: Props) {
       </Screen>
     );
   }
-  if (isError) {
+  if (isError && !data) {
     return (
       <Screen>
         <ErrorState
@@ -110,7 +143,16 @@ export function OrdersScreen({ onOpenOrder, onTrackOrder }: Props) {
             </Pressable>
           ))}
         </View>
-        <ScrollView contentContainerStyle={styles.list}>
+        <ScrollView
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl
+              refreshing={Boolean(isFetching && data)}
+              onRefresh={() => void refetch()}
+              tintColor={colors.coral}
+            />
+          }
+        >
           {list.length === 0 ? (
             <EmptyState
               title={
@@ -136,7 +178,7 @@ export function OrdersScreen({ onOpenOrder, onTrackOrder }: Props) {
                 statusLabel={t(`orders.status.${order.status}`)}
                 onView={() => onOpenOrder(order.id)}
                 onTrack={
-                  order.status !== 'COMPLETED'
+                  ACTIVE_STATUSES.has(order.status)
                     ? () => onTrackOrder(order.id)
                     : undefined
                 }

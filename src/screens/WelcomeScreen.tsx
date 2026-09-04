@@ -19,7 +19,7 @@ import { mediaUrl } from '../services/api';
 import type { OnboardingSlide } from '../services/api/onboardingApi';
 
 const ORANGE = '#FAFAF8';
-const AUTO_MS = 2500;
+const AUTO_MS = 2800;
 const SHADOW_STEPS = [0.02, 0.05, 0.1, 0.16, 0.24, 0.34, 0.46];
 const FALLBACK_SLIDES = [
   require('../../assets/welcome/cafe-snow.jpg'),
@@ -81,8 +81,9 @@ export function WelcomeScreen({ onGetStarted }: Props) {
   const { data, isLoading } = useOnboarding();
   const listRef = useRef<FlatList<OnboardingSlide>>(null);
   const indexRef = useRef(0);
+  const finishingRef = useRef(false);
   const [index, setIndex] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const slides = useMemo(
     () => (data?.slides ?? []).filter((s) => s.isActive),
@@ -91,37 +92,48 @@ export function WelcomeScreen({ onGetStarted }: Props) {
   const ctaText = data?.ctaText ?? 'Get Started';
   const footerReserve = Math.max(insets.bottom, 18) + 100;
 
-  const goTo = useCallback(
-    (next: number, animated = true) => {
-      if (!slides.length) return;
-      const clamped = ((next % slides.length) + slides.length) % slides.length;
-      indexRef.current = clamped;
-      setIndex(clamped);
-      listRef.current?.scrollToOffset({ offset: clamped * width, animated });
-    },
-    [slides.length, width],
-  );
+  const finish = useCallback(() => {
+    if (finishingRef.current) return;
+    finishingRef.current = true;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    onGetStarted();
+  }, [onGetStarted]);
 
-  const startTimer = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    if (slides.length <= 1) return;
-    timerRef.current = setInterval(() => {
-      goTo(indexRef.current + 1);
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  const scheduleAdvance = useCallback(() => {
+    clearTimer();
+    if (!slides.length || finishingRef.current) return;
+    timerRef.current = setTimeout(() => {
+      const current = indexRef.current;
+      // After last slide has shown, auto-continue to the next screen.
+      if (current >= slides.length - 1) {
+        finish();
+        return;
+      }
+      const next = current + 1;
+      indexRef.current = next;
+      setIndex(next);
+      listRef.current?.scrollToOffset({ offset: next * width, animated: true });
+      scheduleAdvance();
     }, AUTO_MS);
-  }, [goTo, slides.length]);
+  }, [clearTimer, finish, slides.length, width]);
 
   useEffect(() => {
-    startTimer();
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [startTimer]);
+    scheduleAdvance();
+    return clearTimer;
+  }, [scheduleAdvance, clearTimer]);
 
   const onMomentumEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const next = Math.round(event.nativeEvent.contentOffset.x / width);
     indexRef.current = next;
     setIndex(next);
-    startTimer();
+    scheduleAdvance();
   };
 
   if (isLoading) {
@@ -141,7 +153,7 @@ export function WelcomeScreen({ onGetStarted }: Props) {
         <Text style={styles.fallbackBody}>Specialty coffee, ordered ahead.</Text>
         <Pressable
           accessibilityRole="button"
-          onPress={onGetStarted}
+          onPress={finish}
           style={[styles.cta, { marginTop: 24, alignSelf: 'stretch', marginHorizontal: 20 }]}
         >
           <Text style={styles.ctaText}>{ctaText}</Text>
@@ -168,9 +180,7 @@ export function WelcomeScreen({ onGetStarted }: Props) {
           offset: width * i,
           index: i,
         })}
-        onScrollBeginDrag={() => {
-          if (timerRef.current) clearInterval(timerRef.current);
-        }}
+        onScrollBeginDrag={clearTimer}
         onMomentumScrollEnd={onMomentumEnd}
         renderItem={({ item, index: slideIndex }) => {
           const imageUri = mediaUrl(item.imageUrl);
@@ -249,7 +259,7 @@ export function WelcomeScreen({ onGetStarted }: Props) {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={ctaText}
-          onPress={onGetStarted}
+          onPress={finish}
           hitSlop={12}
           style={styles.cta}
         >

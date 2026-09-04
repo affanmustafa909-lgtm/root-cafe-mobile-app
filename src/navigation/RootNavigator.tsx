@@ -9,9 +9,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
-import { STORAGE_KEYS, WELCOME_VERSION } from '../constants/config';
 import { OfflineBanner } from '../components/OfflineBanner';
 import { fonts, radii } from '../constants/theme';
 import { registerForPushNotifications } from '../hooks/usePushNotifications';
@@ -303,7 +301,7 @@ function MainTabs() {
 
 export function RootNavigator() {
   const { isAuthenticated, isLoading } = useAuth();
-  const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
+  const [bootReady, setBootReady] = useState(false);
   const [showSplash, setShowSplash] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const { t } = useTranslation();
@@ -327,13 +325,19 @@ export function RootNavigator() {
     [colors],
   );
 
+  // Guests always see Get Started on cold start. Logged-in users go straight home.
   useEffect(() => {
-    void AsyncStorage.getItem(STORAGE_KEYS.welcomeSeen).then((value) => {
-      const seen = value === WELCOME_VERSION;
-      setOnboardingDone(seen);
-      if (!seen) setShowSplash(true);
-    });
-  }, []);
+    if (isLoading) return;
+    if (isAuthenticated) {
+      setShowSplash(false);
+      setShowWelcome(false);
+      setBootReady(true);
+      return;
+    }
+    setShowSplash(true);
+    setShowWelcome(false);
+    setBootReady(true);
+  }, [isAuthenticated, isLoading]);
 
   const onSplashReady = useCallback(() => {
     setShowSplash(false);
@@ -341,11 +345,8 @@ export function RootNavigator() {
   }, []);
 
   const finishWelcome = useCallback(() => {
-    void AsyncStorage.setItem(STORAGE_KEYS.welcomeSeen, WELCOME_VERSION).finally(() => {
-      setShowWelcome(false);
-      setOnboardingDone(true);
-      setShowSplash(false);
-    });
+    setShowWelcome(false);
+    setShowSplash(false);
   }, []);
 
   useEffect(() => {
@@ -358,7 +359,7 @@ export function RootNavigator() {
     <NavigationContainer theme={navTheme}>
       <OfflineBanner />
       <RootStack.Navigator screenOptions={stackScreenOptions}>
-        {onboardingDone === null || isLoading ? (
+        {!bootReady || isLoading ? (
           <RootStack.Screen name="Splash" options={{ headerShown: false }}>
             {() => <SplashScreen onReady={() => {}} quick />}
           </RootStack.Screen>

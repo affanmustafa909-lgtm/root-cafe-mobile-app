@@ -10,7 +10,7 @@ export const STORAGE_KEYS = {
 } as const;
 
 /** Bump when cover / onboarding slides change so users see Get Started again once. */
-export const WELCOME_VERSION = '2';
+export const WELCOME_VERSION = '3';
 
 const LIVE_API =
   'https://backend-root-cafe-main-production.up.railway.app';
