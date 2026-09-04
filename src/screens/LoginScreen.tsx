@@ -62,11 +62,16 @@ export function LoginScreen({ onRegister, onSuccess, onClose }: Props) {
           paddingBottom: 40,
         },
         containerWithBack: { paddingTop: 64 },
+        brandBlock: {
+          alignItems: 'center',
+          marginBottom: 8,
+          paddingVertical: 8,
+        },
         tagline: {
           ...typography.caption,
           textAlign: 'center',
-          marginTop: 8,
-          marginBottom: 28,
+          marginTop: 10,
+          marginBottom: 24,
           color: colors.textSecondary,
         },
         title: { ...typography.h2, marginBottom: 20, color: colors.text },
@@ -120,8 +125,10 @@ export function LoginScreen({ onRegister, onSuccess, onClose }: Props) {
           keyboardShouldPersistTaps="handled"
         >
           <FadeIn>
-            <BrandMark size="lg" />
-            <Text style={styles.tagline}>{t('auth.tagline')}</Text>
+            <View style={styles.brandBlock}>
+              <BrandMark size="lg" />
+              <Text style={styles.tagline}>{t('auth.tagline')}</Text>
+            </View>
           </FadeIn>
 
           <FadeIn delay={80}>

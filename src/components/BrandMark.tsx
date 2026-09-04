@@ -2,22 +2,28 @@ import React from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { useAppTheme } from '../store/ThemeContext';
 
-const LOGO = require('../assets/splash/logo.png');
+/** Transparent marks — no black/gray box on light or dark screens. */
+const LOGO_ON_DARK = require('../assets/splash/logo-dark.png');
+const LOGO_ON_LIGHT = require('../assets/splash/logo-light.png');
 
 type Props = {
   size?: 'sm' | 'md' | 'lg';
-  /** Kept for API compat — logo already designed for dark surfaces */
+  /** Force white-text logo for dark surfaces. Default follows app theme. */
   onDark?: boolean;
 };
 
-export function BrandMark({ size = 'md' }: Props) {
-  useAppTheme();
+export function BrandMark({ size = 'md', onDark }: Props) {
+  const { mode } = useAppTheme();
+  const darkSurface = onDark ?? mode === 'dark';
+  const source = darkSurface ? LOGO_ON_DARK : LOGO_ON_LIGHT;
+
+  // Both transparent assets are the same wide aspect ratio.
   const dim =
     size === 'lg'
-      ? { width: 180, height: 188 }
+      ? { width: 220, height: 112 }
       : size === 'sm'
-        ? { width: 96, height: 100 }
-        : { width: 132, height: 138 };
+        ? { width: 132, height: 68 }
+        : { width: 176, height: 90 };
 
   return (
     <View
@@ -25,11 +31,14 @@ export function BrandMark({ size = 'md' }: Props) {
       accessibilityRole="header"
       accessibilityLabel="Roots Café"
     >
-      <Image source={LOGO} style={dim} resizeMode="contain" />
+      <Image source={source} style={dim} resizeMode="contain" />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center' },
+  wrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
