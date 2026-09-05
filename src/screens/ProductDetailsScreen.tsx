@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '../components/Badge';
 import { Button } from '../components/Button';
+import { ImagePlaceholder } from '../components/ImagePlaceholder';
 import { QuantityStepper } from '../components/QuantityStepper';
 import { ErrorState, LoadingState } from '../components/States';
 import { useToast } from '../components/Toast';
@@ -354,7 +355,15 @@ export function ProductDetailsScreen({
               transition={120}
             />
           </View>
-        ) : null}
+        ) : (
+          <View style={styles.hero}>
+            <ImagePlaceholder
+              id={data.id}
+              label={data.name.slice(0, 2).toUpperCase()}
+              style={{ flex: 1, width: '100%', height: '100%' }}
+            />
+          </View>
+        )}
 
         <View style={styles.titleRow}>
           <View style={styles.titleBlock}>

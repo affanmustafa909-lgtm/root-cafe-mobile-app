@@ -268,13 +268,22 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
       const t = new Date(p.createdAt).getTime();
       return Number.isFinite(t) ? t : 0;
     };
+    const NEW_MS = 7 * 24 * 60 * 60 * 1000;
+    const isNew = (p: (typeof filtered)[number]) =>
+      createdMs(p) > 0 && Date.now() - createdMs(p) < NEW_MS;
 
     return [...filtered].sort((a, b) => {
       if (sort === 'priceAsc') return Number(a.price) - Number(b.price);
       if (sort === 'priceDesc') return Number(b.price) - Number(a.price);
       if (sort === 'name') return a.name.localeCompare(b.name);
 
-      // Default: most ordered first, then newest, then catalog order.
+      // Default: brand-new products first (so they appear on Home),
+      // then most ordered, then newest / catalog order.
+      const aNew = isNew(a);
+      const bNew = isNew(b);
+      if (aNew !== bNew) return aNew ? -1 : 1;
+      if (aNew && bNew) return createdMs(b) - createdMs(a);
+
       const sa = salesRank.get(a.id) ?? 0;
       const sb = salesRank.get(b.id) ?? 0;
       if (sb !== sa) return sb - sa;

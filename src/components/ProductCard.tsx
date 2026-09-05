@@ -1,10 +1,11 @@
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { duration, easing, useReducedMotion } from '../constants/motion';
-import { localProductImage, resolveProductImageSource } from '../assets/products/productImages';
+import { resolveProductImageSource } from '../assets/products/productImages';
+import { ImagePlaceholder } from './ImagePlaceholder';
 import { mediaUrl } from '../services/api';
 import { useAppTheme } from '../store/ThemeContext';
 import type { Product } from '../types';
@@ -87,7 +88,11 @@ export function ProductCard({ product, onPress, variant = 'list' }: Props) {
     product.imageUrl,
     remote,
   );
-  const hasPhoto = Boolean(imageSource);
+  const [imageFailed, setImageFailed] = useState(false);
+  useEffect(() => {
+    setImageFailed(false);
+  }, [product.id, product.imageUrl]);
+  const showPhoto = Boolean(imageSource) && !imageFailed;
   const reduced = useReducedMotion();
   const lift = useRef(new Animated.Value(0)).current;
   const zoom = useRef(new Animated.Value(1)).current;
@@ -267,7 +272,7 @@ export function ProductCard({ product, onPress, variant = 'list' }: Props) {
     ]).start();
   };
 
-  const photo = hasPhoto ? (
+  const photo = showPhoto ? (
     <Animated.View style={{ flex: 1, transform: [{ scale: zoom }] }}>
       <Image
         source={imageSource!}
@@ -277,9 +282,16 @@ export function ProductCard({ product, onPress, variant = 'list' }: Props) {
         cachePolicy="memory-disk"
         recyclingKey={product.id}
         accessibilityIgnoresInvertColors
+        onError={() => setImageFailed(true)}
       />
     </Animated.View>
-  ) : null;
+  ) : (
+    <ImagePlaceholder
+      id={product.id}
+      label={product.name.slice(0, 2).toUpperCase()}
+      style={{ flex: 1, width: '100%', height: '100%' }}
+    />
+  );
 
   if (variant === 'grid') {
     return (
@@ -294,19 +306,17 @@ export function ProductCard({ product, onPress, variant = 'list' }: Props) {
         <Animated.View
           style={[styles.gridCard, { transform: [{ translateY: lift }] }]}
         >
-          {hasPhoto ? (
-            <View style={styles.gridImageWrap}>
-              {photo}
-              {sale.badge ? (
-                <SaleRibbon badge={sale.badge} percent={sale.percent} />
-              ) : null}
-              {soldOut ? (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{t('common.soldOut')}</Text>
-                </View>
-              ) : null}
-            </View>
-          ) : null}
+          <View style={styles.gridImageWrap}>
+            {photo}
+            {sale.badge ? (
+              <SaleRibbon badge={sale.badge} percent={sale.percent} />
+            ) : null}
+            {soldOut ? (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{t('common.soldOut')}</Text>
+              </View>
+            ) : null}
+          </View>
           <View style={styles.gridBody}>
             <Text style={styles.gridName} numberOfLines={1}>
               {product.name}
@@ -343,14 +353,11 @@ export function ProductCard({ product, onPress, variant = 'list' }: Props) {
       <Animated.View
         style={[styles.listCard, { transform: [{ translateY: lift }] }]}
       >
-        {hasPhoto ? (
-          <View style={styles.listImageWrap}>
-            {photo}
-            {sale.badge ? (
-              <SaleRibbon compact badge={sale.badge} percent={sale.percent} />
-            ) : null}
-          </View>
-        ) : null}
+        <View style={styles.listImageWrap}>{photo}
+          {sale.badge ? (
+            <SaleRibbon compact badge={sale.badge} percent={sale.percent} />
+          ) : null}
+        </View>
         <View style={styles.listBody}>
           <Text style={styles.listName} numberOfLines={1}>
             {product.name}

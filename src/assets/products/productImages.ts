@@ -204,20 +204,23 @@ export function productImageForTemperature(
     return /iced|protein/i.test(productName) ? pair.cold : pair.hot;
   }
 
-  return local ?? (remoteUrl ? { uri: remoteUrl } : undefined);
+  // Admin uploads (data URI or API host) beat generic local name matches
+  if (remoteUrl) return { uri: remoteUrl };
+  return local;
 }
 
-/** Prefer bundled photo; fall back to API image URL. */
+/** Prefer admin/API upload when present; fall back to bundled photo by name. */
 export function resolveProductImageSource(
   productName: string,
   imageUrl?: string | null,
   remoteUri?: string | null,
 ): ImageSourcePropType | { uri: string } | undefined {
-  const local = localProductImage(productName);
-  if (local) return local;
+  if (imageUrl?.startsWith('data:')) return { uri: imageUrl };
   if (remoteUri) return { uri: remoteUri };
   if (imageUrl?.startsWith('http')) return { uri: imageUrl };
-  return undefined;
+  // Relative /uploads/... without a resolved remote still try API host via remoteUri;
+  // last resort: bundled catalog photo.
+  return localProductImage(productName);
 }
 
 export function hasProductImage(product: {
