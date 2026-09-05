@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   Alert,
@@ -52,11 +52,17 @@ type Props = {
   onClose?: () => void;
 };
 
-export function RegisterScreen({ onLogin, onOpenLegal, onSuccess, onClose }: Props) {
+export function RegisterScreen({
+  onLogin,
+  onOpenLegal,
+  onSuccess,
+  onClose,
+}: Props) {
   const { t } = useTranslation();
   const { register } = useAuth();
   const { colors, typography } = useAppTheme();
   const [submitting, setSubmitting] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
   const {
     control,
     handleSubmit,
@@ -83,21 +89,39 @@ export function RegisterScreen({ onLogin, onOpenLegal, onSuccess, onClose }: Pro
       StyleSheet.create({
         flex: { flex: 1, backgroundColor: colors.background },
         container: {
-          padding: spacing.lg,
-          paddingTop: spacing.md,
-          paddingBottom: 40,
+          paddingHorizontal: spacing.lg,
+          paddingTop: spacing.sm,
+          paddingBottom: 56,
+          flexGrow: 1,
         },
-        containerWithBack: { paddingTop: 64 },
+        containerWithBack: { paddingTop: 56 },
+        header: {
+          alignItems: 'center',
+          marginBottom: 12,
+        },
         title: {
           ...typography.h2,
-          marginVertical: 16,
+          marginTop: 10,
+          marginBottom: 4,
           textAlign: 'center',
           color: colors.text,
         },
+        subtitle: {
+          ...typography.caption,
+          textAlign: 'center',
+          color: colors.textSecondary,
+          marginBottom: 8,
+        },
+        row: {
+          flexDirection: 'row',
+          gap: 10,
+        },
+        half: { flex: 1 },
         consent: {
           flexDirection: 'row',
           gap: 10,
           marginBottom: 12,
+          marginTop: 4,
           alignItems: 'flex-start',
         },
         checkbox: {
@@ -135,11 +159,12 @@ export function RegisterScreen({ onLogin, onOpenLegal, onSuccess, onClose }: Pro
         },
         link: { ...typography.bodyBold, color: colors.coral },
         footer: {
-          marginTop: 20,
+          marginTop: 18,
           alignItems: 'center',
           gap: 6,
           flexDirection: 'row',
           justifyContent: 'center',
+          paddingBottom: 8,
         },
         footerText: { color: colors.textSecondary },
         error: {
@@ -169,50 +194,72 @@ export function RegisterScreen({ onLogin, onOpenLegal, onSuccess, onClose }: Pro
     }
   });
 
+  const scrollTo = (y: number) => {
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ y, animated: true });
+    });
+  };
+
   return (
     <Screen edges={['top', 'bottom']}>
       {onClose ? <HeaderBack onPress={onClose} /> : null}
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
       >
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={[
             styles.container,
             onClose ? styles.containerWithBack : null,
           ]}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          automaticallyAdjustKeyboardInsets
+          showsVerticalScrollIndicator={false}
         >
           <FadeIn>
-            <BrandMark />
-            <Text style={styles.title}>{t('auth.register')}</Text>
+            <View style={styles.header}>
+              <BrandMark />
+              <Text style={styles.title}>{t('auth.register')}</Text>
+              <Text style={styles.subtitle}>{t('auth.tagline')}</Text>
+            </View>
           </FadeIn>
 
           <Card>
-            <Controller
-              control={control}
-              name="firstName"
-              render={({ field: { onChange, value } }) => (
-                <Input
-                  label={t('auth.firstName')}
-                  value={value}
-                  onChangeText={onChange}
-                  error={errors.firstName?.message}
+            <View style={styles.row}>
+              <View style={styles.half}>
+                <Controller
+                  control={control}
+                  name="firstName"
+                  render={({ field: { onChange, value } }) => (
+                    <Input
+                      label={t('auth.firstName')}
+                      value={value}
+                      onChangeText={onChange}
+                      error={errors.firstName?.message}
+                      onFocus={() => scrollTo(40)}
+                    />
+                  )}
                 />
-              )}
-            />
-            <Controller
-              control={control}
-              name="lastName"
-              render={({ field: { onChange, value } }) => (
-                <Input
-                  label={t('auth.lastName')}
-                  value={value}
-                  onChangeText={onChange}
-                  error={errors.lastName?.message}
+              </View>
+              <View style={styles.half}>
+                <Controller
+                  control={control}
+                  name="lastName"
+                  render={({ field: { onChange, value } }) => (
+                    <Input
+                      label={t('auth.lastName')}
+                      value={value}
+                      onChangeText={onChange}
+                      error={errors.lastName?.message}
+                      onFocus={() => scrollTo(40)}
+                    />
+                  )}
                 />
-              )}
-            />
+              </View>
+            </View>
             <Controller
               control={control}
               name="email"
@@ -224,6 +271,7 @@ export function RegisterScreen({ onLogin, onOpenLegal, onSuccess, onClose }: Pro
                   value={value}
                   onChangeText={onChange}
                   error={errors.email?.message}
+                  onFocus={() => scrollTo(120)}
                 />
               )}
             />
@@ -236,6 +284,7 @@ export function RegisterScreen({ onLogin, onOpenLegal, onSuccess, onClose }: Pro
                   keyboardType="phone-pad"
                   value={value}
                   onChangeText={onChange}
+                  onFocus={() => scrollTo(180)}
                 />
               )}
             />
@@ -249,6 +298,7 @@ export function RegisterScreen({ onLogin, onOpenLegal, onSuccess, onClose }: Pro
                   value={value}
                   onChangeText={onChange}
                   error={errors.password?.message}
+                  onFocus={() => scrollTo(260)}
                 />
               )}
             />
@@ -262,6 +312,7 @@ export function RegisterScreen({ onLogin, onOpenLegal, onSuccess, onClose }: Pro
                   value={value}
                   onChangeText={onChange}
                   error={errors.confirmPassword?.message}
+                  onFocus={() => scrollTo(340)}
                 />
               )}
             />

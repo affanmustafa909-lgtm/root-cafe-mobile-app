@@ -4,7 +4,6 @@ import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { CategoryChipBar } from '../components/CategoryChipBar';
 import { ProductCard } from '../components/ProductCard';
-import { hasProductImage } from '../assets/products/productImages';
 import { Skeleton } from '../components/Skeleton';
 import { EmptyState, ErrorState } from '../components/States';
 import { fonts, radii } from '../constants/theme';
@@ -62,7 +61,12 @@ export function MenuScreen({ initialCategoryId, onOpenProduct }: Props) {
   );
 
   const filtered = useMemo(() => {
-    const list = (products.data ?? []).filter(hasProductImage);
+    const list = [...(products.data ?? [])].sort((a, b) => {
+      const ca = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const cb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      if (cb !== ca) return cb - ca;
+      return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+    });
     const q = search.trim().toLowerCase();
     if (!q) return list;
     return list.filter(

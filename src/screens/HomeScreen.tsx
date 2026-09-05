@@ -18,7 +18,6 @@ import {
   type HomeSort,
 } from '../components/HomeFilterSheet';
 import { ProductCard } from '../components/ProductCard';
-import { hasProductImage } from '../assets/products/productImages';
 import { Screen } from '../components/Screen';
 import { ErrorState, LoadingState } from '../components/States';
 import { fonts } from '../constants/theme';
@@ -247,8 +246,9 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
   }, [popularSales.data]);
 
   const visible = useMemo(() => {
+    // Show every available product (remote/local image or placeholder card).
     const list = (products.data ?? []).filter(
-      (p) => !p.soldOut && !p.isSoldOut && hasProductImage(p),
+      (p) => !p.soldOut && !p.isSoldOut,
     );
     const q = search.trim().toLowerCase();
     const filtered = list.filter((p) => {
@@ -262,14 +262,23 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
         (p.description ?? '').toLowerCase().includes(q);
       return inCategory && inSearch;
     });
+
+    const createdMs = (p: (typeof filtered)[number]) => {
+      if (!p.createdAt) return 0;
+      const t = new Date(p.createdAt).getTime();
+      return Number.isFinite(t) ? t : 0;
+    };
+
     return [...filtered].sort((a, b) => {
       if (sort === 'priceAsc') return Number(a.price) - Number(b.price);
       if (sort === 'priceDesc') return Number(b.price) - Number(a.price);
       if (sort === 'name') return a.name.localeCompare(b.name);
-      // Default / newest: most sold first, then catalog order.
+
+      // Default: most ordered first, then newest, then catalog order.
       const sa = salesRank.get(a.id) ?? 0;
       const sb = salesRank.get(b.id) ?? 0;
       if (sb !== sa) return sb - sa;
+      if (createdMs(b) !== createdMs(a)) return createdMs(b) - createdMs(a);
       return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
     });
   }, [products.data, categoryId, search, sort, salesRank]);

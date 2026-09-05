@@ -14,7 +14,7 @@ export function onUnauthorized(listener: UnauthorizedListener) {
 
 export const api = axios.create({
   baseURL: API_URL,
-  timeout: 30000,
+  timeout: 12000,
 });
 
 api.interceptors.request.use(async (config) => {

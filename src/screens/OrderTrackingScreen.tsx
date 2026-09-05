@@ -9,6 +9,7 @@ import { useOrder } from '../hooks/useMenu';
 import { useOrderSocket } from '../hooks/useOrderSocket';
 import { useAppTheme } from '../store/ThemeContext';
 import { formatPrice } from '../utils/pricing';
+import { formatPickupDateTime } from '../utils/pickup';
 
 type Props = {
   orderId: string;
@@ -50,7 +51,7 @@ export function OrderTrackingScreen({ orderId }: Props) {
       <Text style={[styles.meta, { color: colors.textMuted }]}>
         {t('checkout.pickup')}:{' '}
         {data.pickupType === 'SCHEDULED'
-          ? `${data.pickupDate ?? ''} ${data.pickupTime ?? ''}`.trim()
+          ? formatPickupDateTime(data.pickupDate, data.pickupTime)
           : t('checkout.asap')}
       </Text>
       <Text style={[styles.total, { color: colors.text }]}>

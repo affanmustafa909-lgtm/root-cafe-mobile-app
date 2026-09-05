@@ -9,6 +9,7 @@ import { spacing, typography } from '../constants/theme';
 import { useOrder } from '../hooks/useMenu';
 import { useAppTheme } from '../store/ThemeContext';
 import { formatPrice } from '../utils/pricing';
+import { formatPickupDateTime } from '../utils/pickup';
 
 type Props = {
   orderId: string;
@@ -48,7 +49,7 @@ export function OrderDetailsScreen({ orderId }: Props) {
         </Text>
         <Text style={[styles.value, { color: colors.text }]}>
           {data.pickupType === 'SCHEDULED'
-            ? `${data.pickupDate ?? ''} ${data.pickupTime ?? ''}`.trim()
+            ? formatPickupDateTime(data.pickupDate, data.pickupTime)
             : t('checkout.asap')}
         </Text>
         <Text

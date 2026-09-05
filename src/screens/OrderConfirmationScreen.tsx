@@ -8,6 +8,7 @@ import { FadeIn } from '../components/FadeIn';
 import { spacing, typography } from '../constants/theme';
 import { useAppTheme } from '../store/ThemeContext';
 import type { Order } from '../types';
+import { formatPickupDateTime } from '../utils/pickup';
 
 type Props = {
   order: Order;
@@ -35,7 +36,7 @@ export function OrderConfirmationScreen({ order, onTrack, onView }: Props) {
         </Text>
         <Text style={[styles.value, { color: colors.text }]}>
           {order.pickupType === 'SCHEDULED'
-            ? `${order.pickupDate ?? ''} ${order.pickupTime ?? ''}`.trim()
+            ? formatPickupDateTime(order.pickupDate, order.pickupTime)
             : t('checkout.asap')}
         </Text>
         <Text

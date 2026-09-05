@@ -3,6 +3,22 @@ import { Platform } from 'react-native';
 import { STORAGE_KEYS } from '../../constants/config';
 
 const memory = new Map<string, string>();
+const STORE_TIMEOUT_MS = 2500;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(fallback), ms);
+    promise
+      .then((value) => {
+        clearTimeout(timer);
+        resolve(value);
+      })
+      .catch(() => {
+        clearTimeout(timer);
+        resolve(fallback);
+      });
+  });
+}
 
 async function setItem(key: string, value: string) {
   if (Platform.OS === 'web') {
@@ -14,7 +30,8 @@ async function setItem(key: string, value: string) {
     }
     return;
   }
-  await SecureStore.setItemAsync(key, value);
+  memory.set(key, value);
+  await withTimeout(SecureStore.setItemAsync(key, value), STORE_TIMEOUT_MS, undefined);
 }
 
 async function getItem(key: string) {
@@ -25,12 +42,19 @@ async function getItem(key: string) {
       return memory.get(key) ?? null;
     }
   }
-  return SecureStore.getItemAsync(key);
+  const cached = memory.get(key);
+  const stored = await withTimeout(
+    SecureStore.getItemAsync(key),
+    STORE_TIMEOUT_MS,
+    cached ?? null,
+  );
+  if (stored != null) memory.set(key, stored);
+  return stored ?? cached ?? null;
 }
 
 async function deleteItem(key: string) {
+  memory.delete(key);
   if (Platform.OS === 'web') {
-    memory.delete(key);
     try {
       localStorage.removeItem(key);
     } catch {
@@ -38,7 +62,7 @@ async function deleteItem(key: string) {
     }
     return;
   }
-  await SecureStore.deleteItemAsync(key);
+  await withTimeout(SecureStore.deleteItemAsync(key), STORE_TIMEOUT_MS, undefined);
 }
 
 export async function getToken(): Promise<string | null> {

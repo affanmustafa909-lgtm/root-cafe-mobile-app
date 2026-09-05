@@ -22,6 +22,7 @@ export function useMenuSocket() {
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
         void queryClient.invalidateQueries({ queryKey: ['products'] });
+        void queryClient.invalidateQueries({ queryKey: ['products-popular'] });
         void queryClient.invalidateQueries({ queryKey: ['categories'] });
         void queryClient.invalidateQueries({ queryKey: ['cake-of-day'] });
       }, 800);

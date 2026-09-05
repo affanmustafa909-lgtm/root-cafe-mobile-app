@@ -12,8 +12,10 @@ import { Screen } from '../components/Screen';
 import { fonts } from '../constants/theme';
 import { useAuth } from '../store/AuthContext';
 
-const MIN_SPLASH_MS = 5000;
-const QUICK_SPLASH_MS = 400;
+const MIN_SPLASH_MS = 1200;
+const QUICK_SPLASH_MS = 350;
+/** Never leave the user on splash if auth/storage stalls */
+const MAX_SPLASH_MS = 4500;
 
 /** Mock mark row: soft blue · roast brown · cream */
 const MARK_BEANS = ['#A8C5D4', '#6F4E37', '#E8DFD4'] as const;
@@ -52,18 +54,30 @@ export function SplashScreen({ onReady, quick = false }: Props) {
   }, [fade, rise]);
 
   useEffect(() => {
-    if (isLoading || done.current) return;
+    if (done.current) return;
+
+    const finish = (authenticated: boolean) => {
+      if (done.current) return;
+      done.current = true;
+      onReady(authenticated);
+    };
+
+    const maxTimer = setTimeout(() => finish(isAuthenticated), MAX_SPLASH_MS);
+
+    if (isLoading) {
+      return () => clearTimeout(maxTimer);
+    }
 
     const minMs = quick ? QUICK_SPLASH_MS : MIN_SPLASH_MS;
     const elapsed = Date.now() - startedAt.current;
     const wait = Math.max(0, minMs - elapsed);
 
-    const timer = setTimeout(() => {
-      done.current = true;
-      onReady(isAuthenticated);
-    }, wait);
+    const timer = setTimeout(() => finish(isAuthenticated), wait);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(maxTimer);
+    };
   }, [isLoading, isAuthenticated, onReady, quick]);
 
   return (

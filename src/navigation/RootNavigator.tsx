@@ -339,6 +339,17 @@ export function RootNavigator() {
     setBootReady(true);
   }, [isAuthenticated, isLoading]);
 
+  // Hard fallback: never stay on boot splash if auth hangs
+  useEffect(() => {
+    if (bootReady) return;
+    const timer = setTimeout(() => {
+      setShowSplash(true);
+      setShowWelcome(false);
+      setBootReady(true);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [bootReady]);
+
   const onSplashReady = useCallback(() => {
     setShowSplash(false);
     setShowWelcome(true);

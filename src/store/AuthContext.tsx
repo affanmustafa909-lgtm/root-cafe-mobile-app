@@ -50,16 +50,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    (async () => {
+    let cancelled = false;
+    const BOOT_MS = 4000;
+
+    const boot = (async () => {
       try {
-        await refreshUser();
+        await Promise.race([
+          refreshUser(),
+          new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error('auth-boot-timeout')), BOOT_MS);
+          }),
+        ]);
       } catch {
-        setUser(null);
-        setTokenState(null);
+        if (!cancelled) {
+          setUser(null);
+          setTokenState(null);
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     })();
+
+    return () => {
+      cancelled = true;
+      void boot;
+    };
   }, [refreshUser]);
 
   useEffect(() => {
