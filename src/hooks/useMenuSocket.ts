@@ -33,7 +33,7 @@ export function useMenuSocket() {
 
     const scheduleRefresh = () => {
       if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(refreshAll, 350);
+      timerRef.current = setTimeout(refreshAll, 150);
     };
 
     const onConnect = () => scheduleRefresh();

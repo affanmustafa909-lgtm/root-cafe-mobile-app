@@ -1,8 +1,10 @@
 import { Feather } from '@expo/vector-icons';
-import React, { useMemo, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Image,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -59,6 +61,39 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
   const [sort, setSort] = useState<HomeSort>('newest');
   const [draftCategoryId, setDraftCategoryId] = useState<string | undefined>();
   const [draftSort, setDraftSort] = useState<HomeSort>('newest');
+  const [refreshing, setRefreshing] = useState(false);
+
+  const refreshHome = useCallback(async () => {
+    await Promise.all([
+      categories.refetch(),
+      products.refetch(),
+      popularSales.refetch(),
+      cake.refetch(),
+      settings.refetch(),
+    ]);
+  }, [
+    categories.refetch,
+    products.refetch,
+    popularSales.refetch,
+    cake.refetch,
+    settings.refetch,
+  ]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void products.refetch();
+      void categories.refetch();
+    }, [products.refetch, categories.refetch]),
+  );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refreshHome();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refreshHome]);
 
   const bannerSource = useMemo(() => {
     const remote = mediaUrl(settings.data?.homeBannerImageUrl);
@@ -338,9 +373,12 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
         automaticallyAdjustKeyboardInsets={false}
         automaticallyAdjustContentInsets={false}
         contentInsetAdjustmentBehavior="never"
-        bounces={false}
-        overScrollMode="never"
+        bounces
+        overScrollMode="always"
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
         <FadeIn>
           <View style={styles.header}>

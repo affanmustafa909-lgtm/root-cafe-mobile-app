@@ -24,10 +24,12 @@ export function useProducts(categoryId?: string) {
   return useQuery({
     queryKey: ['products', categoryId ?? 'all'],
     queryFn: () => menuApi.products(categoryId),
-    staleTime: 15_000,
+    staleTime: 10_000,
     gcTime: 60 * 60_000,
     retry: 2,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
+    // Fallback when socket is slow/offline — new admin products appear without restart
+    refetchInterval: 20_000,
     ...liveMenu,
   });
 }
