@@ -280,7 +280,7 @@ export function ProductCard({ product, onPress, variant = 'list' }: Props) {
         contentFit="cover"
         transition={100}
         cachePolicy="memory-disk"
-        recyclingKey={product.id}
+        recyclingKey={`${product.id}-${product.imageUrl ?? ''}`}
         accessibilityIgnoresInvertColors
         onError={() => setImageFailed(true)}
       />

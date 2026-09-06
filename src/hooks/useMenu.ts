@@ -1,17 +1,22 @@
 import { useQuery } from '@tanstack/react-query';
 import { menuApi, orderApi, settingsApi, loyaltyApi } from '../services/api';
 
+/** Shared options so socket invalidation + navigation always pull fresh menu data. */
+const liveMenu = {
+  refetchOnMount: 'always' as const,
+  refetchOnReconnect: true,
+  refetchOnWindowFocus: false,
+};
+
 export function useCategories() {
   return useQuery({
     queryKey: ['categories'],
     queryFn: () => menuApi.categories(),
-    staleTime: 15 * 60_000,
+    staleTime: 30_000,
     gcTime: 60 * 60_000,
     retry: 2,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-    refetchOnWindowFocus: false,
+    ...liveMenu,
   });
 }
 
@@ -19,13 +24,11 @@ export function useProducts(categoryId?: string) {
   return useQuery({
     queryKey: ['products', categoryId ?? 'all'],
     queryFn: () => menuApi.products(categoryId),
-    staleTime: 2 * 60_000,
+    staleTime: 15_000,
     gcTime: 60 * 60_000,
     retry: 2,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-    refetchOnWindowFocus: false,
+    ...liveMenu,
   });
 }
 
@@ -34,9 +37,9 @@ export function useProduct(id: string) {
     queryKey: ['product', id],
     queryFn: () => menuApi.product(id),
     enabled: !!id,
-    staleTime: 5 * 60_000,
+    staleTime: 10_000,
     gcTime: 30 * 60_000,
-    refetchOnMount: false,
+    ...liveMenu,
   });
 }
 
@@ -44,9 +47,8 @@ export function useCakeOfDay() {
   return useQuery({
     queryKey: ['cake-of-day'],
     queryFn: () => menuApi.cakeOfDay(),
-    staleTime: 10 * 60_000,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
+    staleTime: 30_000,
+    ...liveMenu,
   });
 }
 
@@ -54,11 +56,9 @@ export function usePopularSales() {
   return useQuery({
     queryKey: ['products-popular'],
     queryFn: () => menuApi.popularSales(100),
-    staleTime: 10 * 60_000,
+    staleTime: 60_000,
     gcTime: 30 * 60_000,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-    refetchOnWindowFocus: false,
+    ...liveMenu,
   });
 }
 
@@ -66,8 +66,8 @@ export function useOnboarding() {
   return useQuery({
     queryKey: ['onboarding'],
     queryFn: () => import('../services/api').then((m) => m.onboardingApi.list()),
-    staleTime: 30 * 60_000,
-    refetchOnMount: false,
+    staleTime: 30_000,
+    ...liveMenu,
   });
 }
 
@@ -75,10 +75,8 @@ export function useAppSettings() {
   return useQuery({
     queryKey: ['settings-app'],
     queryFn: () => settingsApi.app(),
-    staleTime: 15 * 60_000,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-    refetchOnWindowFocus: false,
+    staleTime: 30_000,
+    ...liveMenu,
   });
 }
 
@@ -87,11 +85,9 @@ export function useStampCard(enabled = true) {
     queryKey: ['stamp-card'],
     queryFn: () => loyaltyApi.stampCard(),
     enabled,
-    staleTime: 2 * 60_000,
+    staleTime: 30_000,
     gcTime: 15 * 60_000,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-    refetchOnWindowFocus: false,
+    ...liveMenu,
   });
 }
 

@@ -274,7 +274,7 @@ export function ProductDetailsScreen({
     ) ??
     (uri ? { uri } : localProductImage(data.name));
 
-  const imageKey = `${data.id}-${temperatureSelection ?? 'default'}`;
+  const imageKey = `${data.id}-${data.imageUrl ?? ''}-${temperatureSelection ?? 'default'}`;
 
   const lineTotal = calcLineTotal(data.price, selectedOptions, quantity);
 

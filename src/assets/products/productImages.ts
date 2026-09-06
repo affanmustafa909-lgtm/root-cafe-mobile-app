@@ -195,6 +195,15 @@ export function productImageForTemperature(
   const local = localProductImage(productName);
   const pair = resolveTempPair(productId, productName, categoryId);
 
+  // Admin-uploaded photos (durable/runtime/data) always win over bundled catalog art
+  const isAdminUpload =
+    !!remoteUrl &&
+    (remoteUrl.startsWith('data:') ||
+      remoteUrl.includes('/uploads/durable/') ||
+      remoteUrl.includes('/uploads/runtime/') ||
+      /^https?:\/\//i.test(remoteUrl));
+  if (isAdminUpload) return { uri: remoteUrl! };
+
   if (temperature && pair) {
     return temperature === 'Cold' ? pair.cold : pair.hot;
   }
@@ -204,7 +213,6 @@ export function productImageForTemperature(
     return /iced|protein/i.test(productName) ? pair.cold : pair.hot;
   }
 
-  // Admin uploads (data URI or API host) beat generic local name matches
   if (remoteUrl) return { uri: remoteUrl };
   return local;
 }
