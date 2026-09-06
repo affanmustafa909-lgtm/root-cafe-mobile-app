@@ -15,17 +15,20 @@ export function useMenuSocket() {
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 2000,
+      reconnectionDelayMax: 15000,
     });
     socketRef.current = socket;
 
     const refreshMenu = () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      // Longer debounce: admin edits often emit several events in a row
       timerRef.current = setTimeout(() => {
         void queryClient.invalidateQueries({ queryKey: ['products'] });
         void queryClient.invalidateQueries({ queryKey: ['products-popular'] });
         void queryClient.invalidateQueries({ queryKey: ['categories'] });
         void queryClient.invalidateQueries({ queryKey: ['cake-of-day'] });
-      }, 800);
+        void queryClient.invalidateQueries({ queryKey: ['product'] });
+      }, 2500);
     };
 
     socket.on('menu.updated', refreshMenu);

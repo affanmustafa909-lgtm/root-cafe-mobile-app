@@ -19,12 +19,12 @@ export function useProducts(categoryId?: string) {
   return useQuery({
     queryKey: ['products', categoryId ?? 'all'],
     queryFn: () => menuApi.products(categoryId),
-    staleTime: 60_000,
+    staleTime: 2 * 60_000,
     gcTime: 60 * 60_000,
     retry: 2,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
-    refetchOnMount: true,
-    refetchOnReconnect: true,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
     refetchOnWindowFocus: false,
   });
 }

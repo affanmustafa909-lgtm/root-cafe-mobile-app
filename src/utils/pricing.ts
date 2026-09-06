@@ -4,11 +4,15 @@ export type ProductBadge = 'discount' | 'topSale' | null;
 
 export function productSale(product: Product) {
   const percent =
-    product.discountPercent && product.discountPercent > 0
+    product.discountPercent &&
+    product.discountPercent > 0 &&
+    product.discountPercent <= 50
       ? product.discountPercent
       : null;
   const listed =
-    product.compareAtPrice && product.compareAtPrice > product.price
+    product.compareAtPrice &&
+    product.compareAtPrice > product.price &&
+    product.compareAtPrice < product.price * 3
       ? product.compareAtPrice
       : null;
   const compareAt =
