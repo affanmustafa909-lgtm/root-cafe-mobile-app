@@ -83,15 +83,21 @@ export function ProductCard({ product, onPress, variant = 'list' }: Props) {
   const soldOut = product.soldOut || product.isSoldOut;
   const sale = productSale(product);
   const remote = mediaUrl(product.imageUrl);
+  const remoteHot = mediaUrl(product.imageUrlHot);
+  const remoteCold = mediaUrl(product.imageUrlCold);
   const imageSource = resolveProductImageSource(
     product.name,
     product.imageUrl,
     remote,
+    product.id,
+    product.categoryId ?? product.category?.id,
+    remoteHot,
+    remoteCold,
   );
   const [imageFailed, setImageFailed] = useState(false);
   useEffect(() => {
     setImageFailed(false);
-  }, [product.id, product.imageUrl]);
+  }, [product.id, product.imageUrl, product.imageUrlHot, product.imageUrlCold]);
   const showPhoto = Boolean(imageSource) && !imageFailed;
   const reduced = useReducedMotion();
   const lift = useRef(new Animated.Value(0)).current;
@@ -280,7 +286,7 @@ export function ProductCard({ product, onPress, variant = 'list' }: Props) {
         contentFit="cover"
         transition={100}
         cachePolicy="memory-disk"
-        recyclingKey={`${product.id}-${product.imageUrl ?? ''}`}
+        recyclingKey={`${product.id}-${product.imageUrl ?? ''}-${product.imageUrlHot ?? ''}-${product.imageUrlCold ?? ''}`}
         accessibilityIgnoresInvertColors
         onError={() => setImageFailed(true)}
       />

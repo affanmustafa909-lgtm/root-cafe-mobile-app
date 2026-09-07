@@ -191,25 +191,27 @@ export function productImageForTemperature(
   categoryId: string | undefined,
   temperature: 'Hot' | 'Cold' | undefined,
   remoteUrl?: string | null,
+  remoteHot?: string | null,
+  remoteCold?: string | null,
 ): ImageSourcePropType | { uri: string } | undefined {
   const local = localProductImage(productName);
   const pair = resolveTempPair(productId, productName, categoryId);
 
-  // Admin-uploaded photos (durable/runtime/data) always win over bundled catalog art
-  const isAdminUpload =
+  if (temperature === 'Cold' && remoteCold) return { uri: remoteCold };
+  if (temperature === 'Hot' && remoteHot) return { uri: remoteHot };
+
+  // Admin-replaced main photo (durable) — don't override with bundled art
+  const isReplacedMain =
     !!remoteUrl &&
     (remoteUrl.startsWith('data:') ||
       remoteUrl.includes('/uploads/durable/') ||
-      remoteUrl.includes('/uploads/runtime/') ||
-      /^https?:\/\//i.test(remoteUrl));
-  if (isAdminUpload) return { uri: remoteUrl! };
+      remoteUrl.includes('/uploads/runtime/'));
 
-  if (temperature && pair) {
+  if (temperature && pair && !isReplacedMain) {
     return temperature === 'Cold' ? pair.cold : pair.hot;
   }
 
-  // No temperature chosen yet — prefer cold for protein/matcha list icon if pair exists
-  if (!temperature && pair && /protein|matcha|iced/i.test(productName)) {
+  if (!temperature && pair && /protein|matcha|iced/i.test(productName) && !isReplacedMain) {
     return /iced|protein/i.test(productName) ? pair.cold : pair.hot;
   }
 
@@ -217,17 +219,32 @@ export function productImageForTemperature(
   return local;
 }
 
-/** Prefer admin/API upload when present; fall back to bundled photo by name. */
+/** Prefer API upload when present; fall back to bundled photo by name. */
 export function resolveProductImageSource(
   productName: string,
   imageUrl?: string | null,
   remoteUri?: string | null,
+  productId?: string,
+  categoryId?: string,
+  remoteHot?: string | null,
+  remoteCold?: string | null,
 ): ImageSourcePropType | { uri: string } | undefined {
+  if (productId) {
+    return productImageForTemperature(
+      productId,
+      productName,
+      categoryId,
+      undefined,
+      remoteUri ?? (imageUrl?.startsWith('http') || imageUrl?.startsWith('data:')
+        ? imageUrl
+        : null),
+      remoteHot,
+      remoteCold,
+    );
+  }
   if (imageUrl?.startsWith('data:')) return { uri: imageUrl };
   if (remoteUri) return { uri: remoteUri };
   if (imageUrl?.startsWith('http')) return { uri: imageUrl };
-  // Relative /uploads/... without a resolved remote still try API host via remoteUri;
-  // last resort: bundled catalog photo.
   return localProductImage(productName);
 }
 

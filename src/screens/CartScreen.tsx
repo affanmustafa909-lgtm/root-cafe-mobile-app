@@ -16,11 +16,12 @@ import { EmptyState } from '../components/States';
 import { QuantityStepper } from '../components/QuantityStepper';
 import { Screen } from '../components/Screen';
 import { radii, spacing } from '../constants/theme';
-import { useAppSettings } from '../hooks/useMenu';
-import { localProductImage } from '../assets/products/productImages';
+import { useAppSettings, useProducts } from '../hooks/useMenu';
+import { resolveProductImageSource } from '../assets/products/productImages';
 import { mediaUrl } from '../services/api';
 import { useCart } from '../store/CartContext';
 import { useAppTheme } from '../store/ThemeContext';
+import type { Product } from '../types';
 import { calcTax, formatPrice } from '../utils/pricing';
 
 type Props = {
@@ -39,9 +40,16 @@ export function CartScreen({
   const { colors, typography } = useAppTheme();
   const { items, subtotal, updateQuantity, removeItem, clearCart } = useCart();
   const settings = useAppSettings();
+  const products = useProducts();
   const taxRate = settings.data?.taxRate ?? 0;
   const tax = calcTax(subtotal, taxRate);
   const total = subtotal + tax;
+
+  const liveById = useMemo(() => {
+    const map = new Map<string, Product>();
+    for (const p of products.data ?? []) map.set(p.id, p);
+    return map;
+  }, [products.data]);
 
   const styles = useMemo(
     () =>
@@ -122,16 +130,27 @@ export function CartScreen({
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.title}>{t('cart.title')}</Text>
           {items.map((item) => {
-            const local = localProductImage(item.productName);
-            const uri = local ? undefined : mediaUrl(item.productImageUrl);
+            const live = liveById.get(item.productId);
+            const imageUrl = live?.imageUrl ?? item.productImageUrl;
+            const remote = mediaUrl(imageUrl);
+            const imageSource = resolveProductImageSource(
+              live?.name ?? item.productName,
+              imageUrl,
+              remote,
+              item.productId,
+              live?.categoryId ?? live?.category?.id,
+              mediaUrl(live?.imageUrlHot),
+              mediaUrl(live?.imageUrlCold),
+            );
             return (
               <Card key={item.id} style={styles.card} padded={false}>
                 <View style={styles.cardInner}>
-                  {local || uri ? (
+                  {imageSource ? (
                     <Image
-                      source={local ?? { uri }}
+                      source={imageSource}
                       style={styles.thumb}
                       contentFit="cover"
+                      recyclingKey={`${item.productId}-${imageUrl ?? ''}`}
                     />
                   ) : null}
                   <View style={styles.cardBody}>

@@ -248,6 +248,8 @@ export function ProductDetailsScreen({
   const soldOut = data.soldOut || data.isSoldOut || data.isAvailable === false;
   const sale = productSale(data);
   const uri = mediaUrl(data.imageUrl);
+  const uriHot = mediaUrl(data.imageUrlHot);
+  const uriCold = mediaUrl(data.imageUrlCold);
 
   const selectedOptions: CartOption[] = cartOptionsFromSelections(
     groups,
@@ -271,10 +273,12 @@ export function ProductDetailsScreen({
       data.categoryId ?? data.category?.id,
       temperatureSelection,
       uri,
+      uriHot,
+      uriCold,
     ) ??
     (uri ? { uri } : localProductImage(data.name));
 
-  const imageKey = `${data.id}-${data.imageUrl ?? ''}-${temperatureSelection ?? 'default'}`;
+  const imageKey = `${data.id}-${data.imageUrl ?? ''}-${data.imageUrlHot ?? ''}-${data.imageUrlCold ?? ''}-${temperatureSelection ?? 'default'}`;
 
   const lineTotal = calcLineTotal(data.price, selectedOptions, quantity);
 

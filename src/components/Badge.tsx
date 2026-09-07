@@ -38,6 +38,8 @@ export function statusTone(status?: string): BadgeTone {
       return 'sky';
     case 'COMPLETED':
       return 'sky';
+    case 'DECLINED':
+      return 'coral';
     default:
       return 'muted';
   }

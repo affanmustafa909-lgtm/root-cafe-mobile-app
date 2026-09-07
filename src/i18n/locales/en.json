@@ -54,7 +54,7 @@
     "orderNow": "Order Now",
     "categories": "Categories",
     "featured": "Featured",
-    "popularDrinks": "Popular drinks",
+    "popularDrinks": "Popular",
     "viewMenu": "View Menu",
     "seeAll": "See all",
     "gridView": "Grid view",
@@ -148,12 +148,14 @@
       "RECEIVED": "Order received",
       "PREPARING": "Preparing",
       "READY_FOR_PICKUP": "Ready for pickup",
-      "COMPLETED": "Completed"
+      "COMPLETED": "Completed",
+      "DECLINED": "Declined"
     },
     "paymentUnpaid": "Unpaid",
     "paymentPaid": "Paid",
     "paymentStatus": "Payment status",
-    "pollHint": "Live updates unavailable — refreshing periodically."
+    "pollHint": "Live updates unavailable — refreshing periodically.",
+    "declinedHint": "The café could not fulfil this order (item unavailable or closed early)."
   },
   "legal": {
     "pendingUrl": "Client-approved legal content will be loaded from:",

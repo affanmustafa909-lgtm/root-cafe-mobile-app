@@ -27,6 +27,7 @@ import { generatePickupDates, generatePickupSlots } from '../utils/pickup';
 import { calcLineTotal, calcTax, formatPrice } from '../utils/pricing';
 import { completeCartOptions } from '../utils/customization';
 import { useQueryClient } from '@tanstack/react-query';
+import { notifyOrderUpdate } from '../hooks/usePushNotifications';
 
 type Props = {
   onSuccess: (order: Order) => void;
@@ -274,6 +275,11 @@ export function CheckoutScreen({ onSuccess, onNeedAuth }: Props) {
       void qc.setQueryData(['orders'], (prev: unknown) => {
         const list = Array.isArray(prev) ? prev : [];
         return [order, ...list.filter((o: { id?: string }) => o.id !== order.id)];
+      });
+      void notifyOrderUpdate({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        status: order.status ?? 'RECEIVED',
       });
       onSuccess(order);
     } catch (error) {

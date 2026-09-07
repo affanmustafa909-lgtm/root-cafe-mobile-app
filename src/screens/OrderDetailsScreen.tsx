@@ -79,6 +79,11 @@ export function OrderDetailsScreen({ orderId }: Props) {
 
       <Card style={styles.card}>
         <OrderTimeline status={data.status} />
+        {data.status === 'DECLINED' && data.notes ? (
+          <Text style={[styles.meta, { color: colors.textSecondary, marginTop: 8 }]}>
+            {data.notes}
+          </Text>
+        ) : null}
       </Card>
 
       {data.items.map((item) => (

@@ -1,8 +1,8 @@
 import { Feather } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  Image,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { CoffeeBeanRow } from '../components/CoffeeBean';
-import { CategoryChipBar } from '../components/CategoryChipBar';
 import { FadeIn } from '../components/FadeIn';
 import {
   HomeFilterSheet,
@@ -44,6 +43,12 @@ type Props = {
   onOpenMenu: (categoryId?: string) => void;
   onOpenProduct: (productId: string) => void;
 };
+
+function idNoise(id: string): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i += 1) h = (h * 31 + id.charCodeAt(i)) | 0;
+  return h;
+}
 
 export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
   const { t } = useTranslation();
@@ -193,7 +198,7 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
           justifyContent: 'center',
         },
         banner: {
-          height: 168,
+          height: 200,
           borderRadius: 22,
           overflow: 'hidden',
           marginBottom: 22,
@@ -231,13 +236,24 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
           borderColor: cafe.olive,
           backgroundColor: cafe.olive,
         },
-        seeAll: {
-          color: cafe.olive,
-          fontFamily: fonts.sansSemi,
-          fontSize: 14,
+        viewMenuBtn: {
+          marginTop: 4,
+          marginBottom: 18,
+          alignSelf: 'stretch',
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingVertical: 16,
+          paddingHorizontal: 24,
+          borderRadius: 16,
+          backgroundColor: cafe.olive,
+          ...cafeShadow,
         },
-        chipsScroll: { flexGrow: 0, marginBottom: 18 },
-        chips: { alignItems: 'center', paddingRight: 8 },
+        viewMenuBtnText: {
+          color: '#FFFFFF',
+          fontFamily: fonts.sansBold,
+          fontSize: 17,
+          letterSpacing: 0.2,
+        },
         grid: {
           flexDirection: 'row',
           flexWrap: 'wrap',
@@ -246,16 +262,22 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
         gridItem: { width: '50%', paddingHorizontal: 7 },
         list: { gap: 0 },
         seeAllFooter: {
-          marginTop: 8,
+          marginTop: 12,
           marginBottom: 4,
-          alignSelf: 'center',
-          paddingVertical: 12,
-          paddingHorizontal: 20,
+          alignSelf: 'stretch',
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingVertical: 16,
+          paddingHorizontal: 24,
+          borderRadius: 16,
+          borderWidth: 1.5,
+          borderColor: cafe.olive,
+          backgroundColor: cafe.card,
         },
         seeAllFooterText: {
           color: cafe.olive,
-          fontFamily: fonts.sansSemi,
-          fontSize: 15,
+          fontFamily: fonts.sansBold,
+          fontSize: 16,
         },
       }),
     [cafe, colors, cafeShadow],
@@ -281,7 +303,6 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
   }, [popularSales.data]);
 
   const visible = useMemo(() => {
-    // Show every available product (remote/local image or placeholder card).
     const list = (products.data ?? []).filter(
       (p) => !p.soldOut && !p.isSoldOut,
     );
@@ -300,28 +321,23 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
 
     const createdMs = (p: (typeof filtered)[number]) => {
       if (!p.createdAt) return 0;
-      const t = new Date(p.createdAt).getTime();
-      return Number.isFinite(t) ? t : 0;
+      const ms = new Date(p.createdAt).getTime();
+      return Number.isFinite(ms) ? ms : 0;
     };
-    const NEW_MS = 7 * 24 * 60 * 60 * 1000;
-    const isNew = (p: (typeof filtered)[number]) =>
-      createdMs(p) > 0 && Date.now() - createdMs(p) < NEW_MS;
 
     return [...filtered].sort((a, b) => {
       if (sort === 'priceAsc') return Number(a.price) - Number(b.price);
       if (sort === 'priceDesc') return Number(b.price) - Number(a.price);
       if (sort === 'name') return a.name.localeCompare(b.name);
 
-      // Default: brand-new products first (so they appear on Home),
-      // then most ordered, then newest / catalog order.
-      const aNew = isNew(a);
-      const bNew = isNew(b);
-      if (aNew !== bNew) return aNew ? -1 : 1;
-      if (aNew && bNew) return createdMs(b) - createdMs(a);
-
+      // Popular: most ordered first; stable variety when sales are equal/empty.
       const sa = salesRank.get(a.id) ?? 0;
       const sb = salesRank.get(b.id) ?? 0;
       if (sb !== sa) return sb - sa;
+      if (sa === 0 && sb === 0) {
+        const n = idNoise(a.id) - idNoise(b.id);
+        if (n !== 0) return n;
+      }
       if (createdMs(b) !== createdMs(a)) return createdMs(b) - createdMs(a);
       return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
     });
@@ -330,11 +346,7 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
   const gridItems = visible.slice(0, GRID_PREVIEW);
   const cakeProductId = cake.data?.productId || cake.data?.product?.id;
 
-  // Keep showing cached menu instead of a full-screen spinner on revisit.
-  if (
-    (categories.isPending && !categories.data) ||
-    (products.isPending && !products.data)
-  ) {
+  if (products.isPending && !products.data) {
     return (
       <Screen backgroundColor={cafe.bg}>
         <LoadingState message={t('common.loading')} />
@@ -342,18 +354,14 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
     );
   }
 
-  // Only hard-fail when we have no data at all (keep UI if cached data exists).
-  if (
-    (categories.isError && !categories.data) ||
-    (products.isError && !products.data)
-  ) {
+  if (products.isError && !products.data) {
     return (
       <Screen backgroundColor={cafe.bg}>
         <ErrorState
           message={t('common.error')}
           onRetry={() => {
-            void categories.refetch();
             void products.refetch();
+            void popularSales.refetch();
             void cake.refetch();
             void settings.refetch();
           }}
@@ -454,29 +462,22 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
             <Image
               source={bannerSource}
               style={styles.bannerImage}
-              resizeMode="cover"
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              priority="high"
+              transition={200}
             />
           </Pressable>
         </FadeIn>
 
-        <View style={styles.rowBetween}>
-          <Text style={styles.section}>{t('home.categories')}</Text>
-          <Pressable
-            onPress={() => onOpenMenu(categoryId)}
-            accessibilityRole="button"
-            accessibilityLabel={t('home.viewMenu')}
-          >
-            <Text style={styles.seeAll}>{t('home.viewMenu')}</Text>
-          </Pressable>
-        </View>
-        <CategoryChipBar
-          categories={categories.data ?? []}
-          selectedId={categoryId}
-          onSelect={setCategoryId}
-          allLabel={t('menu.all')}
-          style={styles.chipsScroll}
-          contentContainerStyle={styles.chips}
-        />
+        <Pressable
+          style={styles.viewMenuBtn}
+          onPress={() => onOpenMenu(undefined)}
+          accessibilityRole="button"
+          accessibilityLabel={t('home.viewMenu')}
+        >
+          <Text style={styles.viewMenuBtnText}>{t('home.viewMenu')}</Text>
+        </Pressable>
 
         <View style={styles.rowBetween}>
           <Text style={styles.section}>{t('home.popularDrinks')}</Text>
@@ -544,11 +545,11 @@ export function HomeScreen({ onOpenMenu, onOpenProduct }: Props) {
         {visible.length > 0 ? (
           <Pressable
             style={styles.seeAllFooter}
-            onPress={() => onOpenMenu(categoryId)}
+            onPress={() => onOpenMenu(undefined)}
             accessibilityRole="button"
-            accessibilityLabel={t('home.seeAll')}
+            accessibilityLabel={t('home.viewMenu')}
           >
-            <Text style={styles.seeAllFooterText}>{t('home.seeAll')}</Text>
+            <Text style={styles.seeAllFooterText}>{t('home.viewMenu')}</Text>
           </Pressable>
         ) : null}
       </ScrollView>

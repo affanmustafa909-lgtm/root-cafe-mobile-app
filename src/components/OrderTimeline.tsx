@@ -42,6 +42,35 @@ export function OrderTimeline({ status }: { status: OrderStatus }) {
     return () => loop.stop();
   }, [pulse, reduced]);
 
+  if (status === 'DECLINED') {
+    const tone = statusColors.DECLINED;
+    return (
+      <View style={styles.wrap} accessibilityRole="summary">
+        <View style={styles.row}>
+          <View style={styles.rail}>
+            <View
+              style={[styles.bean, { backgroundColor: tone.bean }]}
+            />
+          </View>
+          <Text
+            style={[
+              styles.label,
+              {
+                color: colors.text,
+                fontFamily: typography.bodyBold.fontFamily,
+              },
+            ]}
+          >
+            {t('orders.status.DECLINED')}
+          </Text>
+        </View>
+        <Text style={[styles.hint, { color: colors.textMuted }]}>
+          {t('orders.declinedHint')}
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.wrap} accessibilityRole="summary">
       {STEPS.map((step, index) => {
@@ -110,5 +139,11 @@ const styles = StyleSheet.create({
     ...typography.body,
     marginLeft: 12,
     paddingTop: 2,
+  },
+  hint: {
+    ...typography.caption,
+    marginLeft: 40,
+    marginTop: -8,
+    marginBottom: 8,
   },
 });

@@ -1,5 +1,10 @@
 export type Role = 'OWNER' | 'MANAGER' | 'STAFF' | 'CUSTOMER';
-export type OrderStatus = 'RECEIVED' | 'PREPARING' | 'READY_FOR_PICKUP' | 'COMPLETED';
+export type OrderStatus =
+  | 'RECEIVED'
+  | 'PREPARING'
+  | 'READY_FOR_PICKUP'
+  | 'COMPLETED'
+  | 'DECLINED';
 export type PaymentMethod = 'PAY_AT_CAFE';
 export type PaymentStatus = 'UNPAID' | 'PAID';
 export type PickupType = 'ASAP' | 'SCHEDULED';
@@ -95,6 +100,8 @@ export interface Product {
   categoryId?: string;
   category?: Category;
   imageUrl?: string | null;
+  imageUrlHot?: string | null;
+  imageUrlCold?: string | null;
   allergens?: string | null;
   soldOut?: boolean;
   isSoldOut?: boolean;

@@ -54,7 +54,7 @@
     "orderNow": "Jetzt bestellen",
     "categories": "Kategorien",
     "featured": "Empfohlen",
-    "popularDrinks": "Beliebte Getränke",
+    "popularDrinks": "Beliebt",
     "viewMenu": "Menü ansehen",
     "seeAll": "Alle ansehen",
     "gridView": "Rasteransicht",
@@ -148,12 +148,14 @@
       "RECEIVED": "Bestellung eingegangen",
       "PREPARING": "Wird zubereitet",
       "READY_FOR_PICKUP": "Abholbereit",
-      "COMPLETED": "Abgeschlossen"
+      "COMPLETED": "Abgeschlossen",
+      "DECLINED": "Abgelehnt"
     },
     "paymentUnpaid": "Unbezahlt",
     "paymentPaid": "Bezahlt",
     "paymentStatus": "Zahlungsstatus",
-    "pollHint": "Live-Updates nicht verfügbar — wird regelmäßig aktualisiert."
+    "pollHint": "Live-Updates nicht verfügbar — wird regelmäßig aktualisiert.",
+    "declinedHint": "Das Café konnte diese Bestellung nicht erfüllen (Artikel nicht verfügbar oder früher geschlossen)."
   },
   "legal": {
     "pendingUrl": "Freigegebene Rechtstexte werden geladen von:",

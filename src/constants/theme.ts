@@ -343,6 +343,11 @@ function makeStatusColors(c: AppColors) {
       bg: c.skyMuted,
       bean: c.sky,
     },
+    DECLINED: {
+      fg: c.danger,
+      bg: c.coralMuted,
+      bean: c.danger,
+    },
   } as const;
 }
 
