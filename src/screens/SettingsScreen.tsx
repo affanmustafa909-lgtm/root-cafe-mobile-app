@@ -24,7 +24,7 @@ import { useAppTheme } from '../store/ThemeContext';
 import { friendlyError } from '../utils/errors';
 
 type Props = {
-  onOpenLegal: (type: 'terms' | 'privacy') => void;
+  onOpenLegal: (type: 'impressum' | 'terms' | 'privacy') => void;
 };
 
 export function SettingsScreen({ onOpenLegal }: Props) {
@@ -117,6 +117,17 @@ export function SettingsScreen({ onOpenLegal }: Props) {
         ))}
       </View>
 
+      <Pressable
+        style={[
+          styles.linkRow,
+          { backgroundColor: colors.panel, borderColor: colors.border },
+        ]}
+        onPress={() => onOpenLegal('impressum')}
+      >
+        <Text style={[styles.link, { color: colors.sky }]}>
+          {t('legal.impressum')}
+        </Text>
+      </Pressable>
       <Pressable
         style={[
           styles.linkRow,

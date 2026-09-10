@@ -138,6 +138,11 @@ export interface AppSettings {
     title: string;
     subtitle: string;
   };
+  legal?: {
+    impressum: string | null;
+    privacy: string | null;
+    terms: string | null;
+  };
   pickup: {
     openTime: string;
     closeTime: string;

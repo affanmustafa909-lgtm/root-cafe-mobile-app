@@ -49,7 +49,7 @@ export type RootStackParamList = {
   OrderTracking: { orderId: string };
   OrderDetails: { orderId: string };
   Settings: undefined;
-  Legal: { type: 'terms' | 'privacy' };
+  Legal: { type: 'impressum' | 'terms' | 'privacy' };
 };
 
 export type AuthStackParamList = {
@@ -214,6 +214,7 @@ function ProfileTabScreen() {
     <ProfileScreen
       onOpenSettings={() => navigation.navigate('Settings')}
       onSignIn={() => navigation.navigate('Auth')}
+      onOpenLegal={(type) => navigation.navigate('Legal', { type })}
     />
   );
 }
@@ -500,7 +501,17 @@ export function RootNavigator() {
                 />
               )}
             </RootStack.Screen>
-            <RootStack.Screen name="Legal" options={{ title: t('auth.terms') }}>
+            <RootStack.Screen
+              name="Legal"
+              options={({ route }) => ({
+                title:
+                  route.params.type === 'impressum'
+                    ? t('legal.impressum')
+                    : route.params.type === 'privacy'
+                      ? t('auth.privacy')
+                      : t('auth.terms'),
+              })}
+            >
               {({ route }) => <LegalScreen type={route.params.type} />}
             </RootStack.Screen>
           </>

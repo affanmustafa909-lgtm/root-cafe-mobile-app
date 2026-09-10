@@ -37,6 +37,7 @@ type Form = z.infer<typeof schema>;
 type Props = {
   onOpenSettings: () => void;
   onSignIn: () => void;
+  onOpenLegal: (type: 'impressum' | 'terms' | 'privacy') => void;
 };
 
 function initialsFrom(name?: string | null, email?: string | null) {
@@ -49,7 +50,7 @@ function initialsFrom(name?: string | null, email?: string | null) {
   return 'RC';
 }
 
-export function ProfileScreen({ onOpenSettings, onSignIn }: Props) {
+export function ProfileScreen({ onOpenSettings, onSignIn, onOpenLegal }: Props) {
   const { t } = useTranslation();
   const toast = useToast();
   const { user, isAuthenticated, updateProfile, uploadAvatar, clearAvatar } =
@@ -211,6 +212,23 @@ export function ProfileScreen({ onOpenSettings, onSignIn }: Props) {
           textAlign: 'center',
           paddingHorizontal: 12,
         },
+        legalRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingVertical: 14,
+          paddingHorizontal: 16,
+          backgroundColor: colors.panel,
+          borderRadius: radii.md,
+          borderWidth: 1,
+          borderColor: colors.border,
+        },
+        legalRowText: {
+          fontFamily: fonts.sansSemi,
+          fontSize: 15,
+          color: colors.text,
+        },
+        legalStack: { gap: 8 },
       }),
     [colors],
   );
@@ -319,6 +337,31 @@ export function ProfileScreen({ onOpenSettings, onSignIn }: Props) {
     </View>
   );
 
+  const legalSection = (
+    <View style={styles.section}>
+      <Text style={styles.sectionLabel}>{t('legal.section')}</Text>
+      <View style={styles.legalStack}>
+        {(
+          [
+            ['impressum', t('legal.impressum')],
+            ['privacy', t('auth.privacy')],
+            ['terms', t('auth.terms')],
+          ] as const
+        ).map(([type, label]) => (
+          <Pressable
+            key={type}
+            style={styles.legalRow}
+            onPress={() => onOpenLegal(type)}
+            accessibilityRole="button"
+          >
+            <Text style={styles.legalRowText}>{label}</Text>
+            <Feather name="chevron-right" size={18} color={colors.textMuted} />
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+
   if (!isAuthenticated) {
     return (
       <Screen>
@@ -338,6 +381,7 @@ export function ProfileScreen({ onOpenSettings, onSignIn }: Props) {
           <View style={styles.guestActions}>
             <Button title={t('auth.login')} onPress={onSignIn} />
           </View>
+          {legalSection}
         </ScrollView>
       </Screen>
     );
@@ -459,6 +503,8 @@ export function ProfileScreen({ onOpenSettings, onSignIn }: Props) {
             />
           </View>
         ) : null}
+
+        {legalSection}
       </ScrollView>
     </Screen>
   );

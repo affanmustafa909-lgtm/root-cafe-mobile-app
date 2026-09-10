@@ -158,8 +158,10 @@
     "declinedHint": "The café could not fulfil this order (item unavailable or closed early)."
   },
   "legal": {
+    "section": "Legal",
+    "impressum": "Impressum",
     "pendingUrl": "Client-approved legal content will be loaded from:",
-    "placeholder": "Legal text will be provided by the client / legal advisor. Placeholder only — do not treat this as binding Terms or Privacy Policy."
+    "placeholder": "Legal text will be provided by the café owner. Ask them to fill Impressum, Privacy, and Terms in the admin panel (Settings → Legal pages)."
   },
   "profile": {
     "title": "My Profile",

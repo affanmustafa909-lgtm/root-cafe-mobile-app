@@ -199,6 +199,9 @@ export function mapUser(raw: Record<string, unknown>): User {
 export function mapAppSettings(raw: Record<string, unknown>): AppSettings {
   const pickup = (raw.pickup as Record<string, unknown>) ?? {};
   const stamp = (raw.stampCard as Record<string, unknown>) ?? {};
+  const legal = (raw.legal as Record<string, unknown>) ?? {};
+  const asText = (v: unknown) =>
+    typeof v === 'string' && v.trim() ? v.trim() : null;
   return {
     currency: (raw.currency as string) ?? 'EUR',
     taxRate: Number(raw.taxRate ?? 0),
@@ -214,6 +217,11 @@ export function mapAppSettings(raw: Record<string, unknown>): AppSettings {
       subtitle:
         (stamp.subtitle as string) ??
         'Collect 8 drinks on the app — the 9th is free',
+    },
+    legal: {
+      impressum: asText(legal.impressum),
+      privacy: asText(legal.privacy),
+      terms: asText(legal.terms),
     },
     pickup: {
       openTime: (pickup.openTime as string) ?? '08:00',

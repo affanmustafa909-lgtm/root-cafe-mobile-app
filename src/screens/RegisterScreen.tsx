@@ -47,7 +47,7 @@ type Form = z.infer<typeof schema>;
 
 type Props = {
   onLogin: () => void;
-  onOpenLegal: (type: 'terms' | 'privacy') => void;
+  onOpenLegal: (type: 'impressum' | 'terms' | 'privacy') => void;
   onSuccess?: () => void;
   onClose?: () => void;
 };

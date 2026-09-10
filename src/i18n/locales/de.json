@@ -158,8 +158,10 @@
     "declinedHint": "Das Café konnte diese Bestellung nicht erfüllen (Artikel nicht verfügbar oder früher geschlossen)."
   },
   "legal": {
+    "section": "Rechtliches",
+    "impressum": "Impressum",
     "pendingUrl": "Freigegebene Rechtstexte werden geladen von:",
-    "placeholder": "Rechtstexte werden vom Mandanten / Rechtsbeistand bereitgestellt. Nur Platzhalter — nicht als verbindliche AGB oder Datenschutzerklärung behandeln."
+    "placeholder": "Rechtstexte werden vom Café eingetragen. Bitte Impressum, Datenschutz und AGB im Admin-Panel unter Einstellungen → Legal pages hinterlegen."
   },
   "profile": {
     "title": "Mein Profil",
