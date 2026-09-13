@@ -161,7 +161,7 @@
     "section": "Legal",
     "impressum": "Impressum",
     "pendingUrl": "Client-approved legal content will be loaded from:",
-    "placeholder": "Legal text will be provided by the café owner. Ask them to fill Impressum, Privacy, and Terms in the admin panel (Settings → Legal pages)."
+    "placeholder": "Fill café contact (address, phone, email, owner) in the admin panel under Settings → Legal pages. Privacy and terms load automatically."
   },
   "profile": {
     "title": "My Profile",

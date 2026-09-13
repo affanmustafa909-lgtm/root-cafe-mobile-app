@@ -44,7 +44,10 @@ export function LegalScreen({ type }: Props) {
             <ActivityIndicator color={colors.sky} />
           </View>
         ) : (
-          <Text style={[styles.body, { color: colors.textMuted }]}>
+          <Text
+            selectable
+            style={[styles.body, { color: colors.textMuted }]}
+          >
             {body?.trim() ? body : t('legal.placeholder')}
           </Text>
         )}

@@ -161,7 +161,7 @@
     "section": "Rechtliches",
     "impressum": "Impressum",
     "pendingUrl": "Freigegebene Rechtstexte werden geladen von:",
-    "placeholder": "Rechtstexte werden vom Café eingetragen. Bitte Impressum, Datenschutz und AGB im Admin-Panel unter Einstellungen → Legal pages hinterlegen."
+    "placeholder": "Bitte Kontaktdaten (Adresse, Telefon, E-Mail, Inhaber) im Admin-Panel unter Einstellungen → Legal pages eintragen. Datenschutz und AGB werden automatisch geladen."
   },
   "profile": {
     "title": "Mein Profil",
