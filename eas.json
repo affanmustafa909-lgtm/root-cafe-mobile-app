@@ -37,7 +37,12 @@
       }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://backend-root-cafe-main-production.up.railway.app",
+        "EXPO_PUBLIC_SOCKET_URL": "https://backend-root-cafe-main-production.up.railway.app",
+        "EXPO_ROUTER_DISABLE_RN_NAVIGATION_CHECK": "1"
+      }
     }
   },
   "submit": {

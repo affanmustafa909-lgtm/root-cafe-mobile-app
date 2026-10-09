@@ -29,6 +29,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       bundleIdentifier: 'com.rootscafe.customer',
       infoPlist: {
         UIBackgroundModes: ['remote-notification'],
+        ITSAppUsesNonExemptEncryption: false,
       },
     },
     android: {
@@ -71,7 +72,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ],
     extra: {
       eas: {
-        projectId: process.env.EAS_PROJECT_ID || undefined,
+        projectId:
+          process.env.EAS_PROJECT_ID || '8ea6eb3e-f719-482c-b83a-9cca441e5275',
       },
     },
   };

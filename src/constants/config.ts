@@ -15,6 +15,18 @@ export const WELCOME_VERSION = '3';
 const LIVE_API =
   'https://backend-root-cafe-main-production.up.railway.app';
 
+function isLocalHost(url: string): boolean {
+  return /:\/\/(localhost|127\.0\.0\.1|10\.0\.2\.2)(:|\/|$)/i.test(url);
+}
+
+/** Release / store builds always use the live API — never a local machine. */
+function resolveApiUrl(raw: string | undefined): string {
+  const candidate = (raw ?? '').trim();
+  if (!candidate) return LIVE_API;
+  if (!__DEV__ && isLocalHost(candidate)) return LIVE_API;
+  return candidate;
+}
+
 function hostForDevice(url: string): string {
   if (Platform.OS !== 'android') return url;
   // Emulator loopback helpers — never rewrite the live Railway host.
@@ -25,10 +37,12 @@ function hostForDevice(url: string): string {
 }
 
 export const API_URL = hostForDevice(
-  process.env.EXPO_PUBLIC_API_URL ?? LIVE_API,
+  resolveApiUrl(process.env.EXPO_PUBLIC_API_URL),
 );
 export const SOCKET_URL = hostForDevice(
-  process.env.EXPO_PUBLIC_SOCKET_URL ?? API_URL,
+  resolveApiUrl(
+    process.env.EXPO_PUBLIC_SOCKET_URL || process.env.EXPO_PUBLIC_API_URL,
+  ),
 );
 
 export const LEGAL_URLS = {
