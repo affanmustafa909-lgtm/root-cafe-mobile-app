@@ -46,6 +46,8 @@ export interface CartItem {
   quantity: number;
   selectedOptions: CartOption[];
   lineTotal: number;
+  /** Stamps earned per unit for this product (from menu). */
+  stampsAwarded?: number;
 }
 
 export type ApiOrderItem = {
@@ -119,6 +121,10 @@ export function mapProduct(raw: Record<string, unknown>): Product {
           ? String(raw.createdAt)
           : undefined,
     isTopSale: Boolean(raw.isTopSale),
+    stampsAwarded:
+      raw.stampsAwarded === null || raw.stampsAwarded === undefined
+        ? 1
+        : Math.max(0, Number(raw.stampsAwarded)),
     discountPercent:
       raw.discountPercent === null || raw.discountPercent === undefined
         ? null

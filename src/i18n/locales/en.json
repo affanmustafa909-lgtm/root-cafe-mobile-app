@@ -111,7 +111,11 @@
     "seeMore": "See more",
     "seeLess": "See less",
     "topSale": "TOP SALE",
-    "percentOff": "{{n}}% OFF"
+    "percentOff": "{{n}}% OFF",
+    "stampsOne": "1 stamp",
+    "stampsMany": "{{count}} stamps",
+    "earnsStamps": "Earns {{count}} stamp on your card",
+    "earnsStamps_plural": "Earns {{count}} stamps on your card"
   },
   "cart": {
     "title": "Cart",
@@ -126,7 +130,9 @@
     "remove": "Remove",
     "edit": "Edit",
     "priceChanged": "The price has changed.",
-    "noLongerAvailable": "This item is no longer available."
+    "noLongerAvailable": "This item is no longer available.",
+    "stampsEarned": "This order earns {{count}} stamp",
+    "stampsEarned_plural": "This order earns {{count}} stamps"
   },
   "checkout": {
     "title": "Checkout",

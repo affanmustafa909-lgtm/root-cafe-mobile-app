@@ -82,6 +82,11 @@ export function ProductCard({ product, onPress, variant = 'list' }: Props) {
   const accentIcon = mode === 'dark' ? colors.black : '#FFFFFF';
   const soldOut = product.soldOut || product.isSoldOut;
   const sale = productSale(product);
+  const stamps = Math.max(0, product.stampsAwarded ?? 1);
+  const stampLabel =
+    stamps === 1
+      ? t('product.stampsOne')
+      : t('product.stampsMany', { count: stamps });
   const remote = mediaUrl(product.imageUrl);
   const remoteHot = mediaUrl(product.imageUrlHot);
   const remoteCold = mediaUrl(product.imageUrlCold);
@@ -176,6 +181,21 @@ export function ProductCard({ product, onPress, variant = 'list' }: Props) {
           fontFamily: typography.small.fontFamily,
           fontSize: 9,
           letterSpacing: 0.4,
+        },
+        stampChip: {
+          alignSelf: 'flex-start',
+          marginTop: 2,
+          borderRadius: 999,
+          paddingHorizontal: 8,
+          paddingVertical: 3,
+          backgroundColor: colors.coralMuted ?? 'rgba(224,42,58,0.12)',
+        },
+        stampChipText: {
+          fontFamily: typography.small.fontFamily,
+          fontSize: 10,
+          fontWeight: '600',
+          color: colors.coral,
+          letterSpacing: 0.2,
         },
         listCard: {
           backgroundColor: cafe.card,
@@ -327,6 +347,11 @@ export function ProductCard({ product, onPress, variant = 'list' }: Props) {
             <Text style={styles.gridName} numberOfLines={1}>
               {product.name}
             </Text>
+            {stamps > 0 ? (
+              <View style={styles.stampChip}>
+                <Text style={styles.stampChipText}>{stampLabel}</Text>
+              </View>
+            ) : null}
             <View style={styles.gridRow}>
               <View style={styles.priceCol}>
                 <Text style={styles.gridPrice}>
@@ -372,6 +397,11 @@ export function ProductCard({ product, onPress, variant = 'list' }: Props) {
             <Text style={styles.listDesc} numberOfLines={2}>
               {product.description}
             </Text>
+          ) : null}
+          {stamps > 0 ? (
+            <View style={styles.stampChip}>
+              <Text style={styles.stampChipText}>{stampLabel}</Text>
+            </View>
           ) : null}
           <View style={styles.listRow}>
             <View style={styles.priceCol}>

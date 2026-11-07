@@ -13,7 +13,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ...config,
     name: 'Roots Café',
     slug: 'roots-cafe',
-    version: '1.1.6',
+    version: '1.1.7',
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'dark',

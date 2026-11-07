@@ -111,7 +111,11 @@
     "seeMore": "Mehr anzeigen",
     "seeLess": "Weniger",
     "topSale": "TOP SALE",
-    "percentOff": "{{n}}% RABATT"
+    "percentOff": "{{n}}% RABATT",
+    "stampsOne": "1 Stempel",
+    "stampsMany": "{{count}} Stempel",
+    "earnsStamps": "Gibt {{count}} Stempel auf deine Karte",
+    "earnsStamps_plural": "Gibt {{count}} Stempel auf deine Karte"
   },
   "cart": {
     "title": "Warenkorb",
@@ -126,7 +130,9 @@
     "remove": "Entfernen",
     "edit": "Bearbeiten",
     "priceChanged": "Der Preis hat sich geändert.",
-    "noLongerAvailable": "Dieser Artikel ist nicht mehr verfügbar."
+    "noLongerAvailable": "Dieser Artikel ist nicht mehr verfügbar.",
+    "stampsEarned": "Diese Bestellung gibt {{count}} Stempel",
+    "stampsEarned_plural": "Diese Bestellung gibt {{count}} Stempel"
   },
   "checkout": {
     "title": "Kasse",

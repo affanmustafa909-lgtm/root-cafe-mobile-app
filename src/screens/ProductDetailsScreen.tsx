@@ -116,6 +116,11 @@ export function ProductDetailsScreen({
           lineHeight: 28,
           color: colors.text,
         },
+        stampHint: {
+          ...typography.caption,
+          color: colors.coral,
+          marginTop: 2,
+        },
         groupRow: {
           marginBottom: 16,
           gap: 8,
@@ -300,6 +305,7 @@ export function ProductDetailsScreen({
         basePrice: data.price,
         quantity,
         selectedOptions,
+        stampsAwarded: data.stampsAwarded ?? 1,
       });
     } else {
       addItem({
@@ -309,6 +315,7 @@ export function ProductDetailsScreen({
         basePrice: data.price,
         quantity,
         selectedOptions,
+        stampsAwarded: data.stampsAwarded ?? 1,
       });
     }
     toast.show(t('product.added'), 'success');
@@ -373,6 +380,13 @@ export function ProductDetailsScreen({
           <View style={styles.titleBlock}>
             <Text style={styles.name}>{data.name}</Text>
             {soldOut ? <Badge label={t('common.soldOut')} tone="coral" /> : null}
+            {(data.stampsAwarded ?? 1) > 0 ? (
+              <Text style={styles.stampHint}>
+                {t('product.earnsStamps', {
+                  count: (data.stampsAwarded ?? 1) * quantity,
+                })}
+              </Text>
+            ) : null}
           </View>
           <QuantityStepper compact value={quantity} onChange={setQuantity} />
         </View>

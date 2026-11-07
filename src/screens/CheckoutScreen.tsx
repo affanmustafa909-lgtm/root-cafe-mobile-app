@@ -178,6 +178,25 @@ export function CheckoutScreen({ onSuccess, onNeedAuth }: Props) {
       return unit > best ? unit : best;
     }, 0);
   }, [redeemFreeDrink, freeAvailable, items]);
+  const orderStamps = useMemo(() => {
+    const total = items.reduce((sum, item) => {
+      const per = Math.max(0, item.stampsAwarded ?? 1);
+      return sum + per * Math.max(0, item.quantity);
+    }, 0);
+    if (!redeemFreeDrink || !freeAvailable || !items.length) return total;
+    const freeUnit = items.reduce(
+      (best, item) => {
+        const unit =
+          item.lineTotal / Math.max(1, item.quantity) ||
+          Number(item.basePrice) ||
+          0;
+        if (unit <= best.unit) return best;
+        return { unit, stamps: Math.max(0, item.stampsAwarded ?? 1) };
+      },
+      { unit: -1, stamps: 1 },
+    );
+    return Math.max(0, total - freeUnit.stamps);
+  }, [items, redeemFreeDrink, freeAvailable]);
   const payableSubtotal = Math.max(0, subtotal - freeDiscount);
   const tax = calcTax(payableSubtotal, taxRate);
   const total = payableSubtotal + tax;
@@ -219,6 +238,7 @@ export function CheckoutScreen({ onSuccess, onNeedAuth }: Props) {
           productName: product.name,
           productImageUrl: product.imageUrl,
           selectedOptions: options,
+          stampsAwarded: product.stampsAwarded ?? item.stampsAwarded ?? 1,
           lineTotal: calcLineTotal(product.price, options, item.quantity),
         };
         next.push(updated);
@@ -419,6 +439,13 @@ export function CheckoutScreen({ onSuccess, onNeedAuth }: Props) {
             <View style={styles.line}>
               <Text style={styles.meta}>Stamp card free drink</Text>
               <Text style={styles.meta}>-{formatPrice(freeDiscount)}</Text>
+            </View>
+          ) : null}
+          {stampQuery.data?.enabled && orderStamps > 0 ? (
+            <View style={styles.line}>
+              <Text style={styles.meta}>
+                {t('cart.stampsEarned', { count: orderStamps })}
+              </Text>
             </View>
           ) : null}
           <View style={styles.line}>

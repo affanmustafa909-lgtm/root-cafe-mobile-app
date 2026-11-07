@@ -19,6 +19,7 @@ type AddCartInput = {
   basePrice: number;
   quantity: number;
   selectedOptions: CartOption[];
+  stampsAwarded?: number;
 };
 
 type CartContextValue = {
@@ -77,6 +78,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         quantity: input.quantity,
         selectedOptions: input.selectedOptions,
         lineTotal,
+        stampsAwarded:
+          input.stampsAwarded === undefined
+            ? 1
+            : Math.max(0, Math.trunc(input.stampsAwarded)),
       },
     ]);
   }, []);
