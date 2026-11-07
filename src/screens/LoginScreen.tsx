@@ -35,11 +35,17 @@ type Form = z.infer<typeof schema>;
 
 type Props = {
   onRegister: () => void;
+  onForgotPassword: () => void;
   onSuccess?: () => void;
   onClose?: () => void;
 };
 
-export function LoginScreen({ onRegister, onSuccess, onClose }: Props) {
+export function LoginScreen({
+  onRegister,
+  onForgotPassword,
+  onSuccess,
+  onClose,
+}: Props) {
   const { t } = useTranslation();
   const { login } = useAuth();
   const { colors, typography } = useAppTheme();
@@ -187,12 +193,7 @@ export function LoginScreen({ onRegister, onSuccess, onClose }: Props) {
                 )}
               />
               <Pressable
-                onPress={() =>
-                  Alert.alert(
-                    t('auth.forgotPassword'),
-                    t('auth.forgotPasswordHint'),
-                  )
-                }
+                onPress={onForgotPassword}
                 accessibilityRole="button"
               >
                 <Text style={styles.link}>{t('auth.forgotPassword')}</Text>

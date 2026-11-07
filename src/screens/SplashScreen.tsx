@@ -10,12 +10,6 @@ import { CoffeeBeanRow } from '../components/CoffeeBean';
 import { LoadingBean } from '../components/LoadingBean';
 import { Screen } from '../components/Screen';
 import { fonts } from '../constants/theme';
-import { useAuth } from '../store/AuthContext';
-
-const MIN_SPLASH_MS = 1200;
-const QUICK_SPLASH_MS = 350;
-/** Never leave the user on splash if auth/storage stalls */
-const MAX_SPLASH_MS = 4500;
 
 /** Mock mark row: soft blue · roast brown · cream */
 const MARK_BEANS = ['#A8C5D4', '#6F4E37', '#E8DFD4'] as const;
@@ -23,16 +17,11 @@ const MARK_BEANS = ['#A8C5D4', '#6F4E37', '#E8DFD4'] as const;
 /** Mock loader row: soft blue · espresso · cream */
 const LOADER_BEANS = ['#A8C5D4', '#2A1B14', '#E8DFD4'] as const;
 
-type Props = {
-  onReady: (authenticated: boolean) => void;
-  /** Skip long splash for returning users / boot checks */
-  quick?: boolean;
-};
-
-export function SplashScreen({ onReady, quick = false }: Props) {
-  const { isLoading, isAuthenticated } = useAuth();
-  const startedAt = useRef(Date.now());
-  const done = useRef(false);
+/**
+ * Visual-only splash. Exit timing is owned by RootNavigator so remounts
+ * or parent re-renders can never reset the leave-splash deadline.
+ */
+export function SplashScreen() {
   const fade = useRef(new Animated.Value(0)).current;
   const rise = useRef(new Animated.Value(10)).current;
 
@@ -52,33 +41,6 @@ export function SplashScreen({ onReady, quick = false }: Props) {
       }),
     ]).start();
   }, [fade, rise]);
-
-  useEffect(() => {
-    if (done.current) return;
-
-    const finish = (authenticated: boolean) => {
-      if (done.current) return;
-      done.current = true;
-      onReady(authenticated);
-    };
-
-    const maxTimer = setTimeout(() => finish(isAuthenticated), MAX_SPLASH_MS);
-
-    if (isLoading) {
-      return () => clearTimeout(maxTimer);
-    }
-
-    const minMs = quick ? QUICK_SPLASH_MS : MIN_SPLASH_MS;
-    const elapsed = Date.now() - startedAt.current;
-    const wait = Math.max(0, minMs - elapsed);
-
-    const timer = setTimeout(() => finish(isAuthenticated), wait);
-
-    return () => {
-      clearTimeout(timer);
-      clearTimeout(maxTimer);
-    };
-  }, [isLoading, isAuthenticated, onReady, quick]);
 
   return (
     <Screen edges={['top', 'bottom']} backgroundColor="#000000">

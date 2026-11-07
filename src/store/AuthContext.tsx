@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    const BOOT_MS = 4000;
+    const BOOT_MS = 2500;
 
     const boot = (async () => {
       try {
@@ -61,18 +61,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setTimeout(() => reject(new Error('auth-boot-timeout')), BOOT_MS);
           }),
         ]);
-      } catch {
+      } catch (error) {
         if (!cancelled) {
-          setUser(null);
-          setTokenState(null);
+          const timedOut =
+            error instanceof Error && error.message === 'auth-boot-timeout';
+          // On timeout keep any stored token; only clear on real auth failures.
+          if (!timedOut) {
+            setUser(null);
+            setTokenState(null);
+          }
         }
       } finally {
         if (!cancelled) setIsLoading(false);
       }
     })();
 
+    // Absolute guarantee — even if the race somehow stalls.
+    const hardStop = setTimeout(() => {
+      if (!cancelled) setIsLoading(false);
+    }, BOOT_MS + 500);
+
     return () => {
       cancelled = true;
+      clearTimeout(hardStop);
       void boot;
     };
   }, [refreshUser]);

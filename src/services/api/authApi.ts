@@ -74,6 +74,37 @@ export const authApi = {
     }
     await setToken(null);
   },
+
+  async forgotPassword(email: string) {
+    const { data } = await api.post<{
+      success?: boolean;
+      message?: string;
+      emailSent?: boolean;
+      debugResetUrl?: string;
+      debugResetToken?: string;
+    }>('/auth/forgot-password', {
+      email,
+      audience: 'app',
+    });
+    return data;
+  },
+
+  async resetPassword(token: string, password: string) {
+    const { data } = await api.post<{ success?: boolean; message?: string }>(
+      '/auth/reset-password',
+      { token, password },
+    );
+    return data;
+  },
+
+  async changePassword(newPassword: string) {
+    const { data } = await api.patch<{
+      accessToken?: string;
+      user?: Record<string, unknown>;
+    }>('/auth/me/credentials', { newPassword });
+    if (data.accessToken) await setToken(data.accessToken);
+    return data;
+  },
 };
 
 export type { User };

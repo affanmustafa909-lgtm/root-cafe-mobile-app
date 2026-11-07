@@ -245,8 +245,8 @@ export function StampCardView({ card }: Props) {
               {remaining <= 0
                 ? 'Almost there — keep collecting.'
                 : remaining === 1
-                  ? '1 more order for a free drink.'
-                  : `${remaining} more orders for a free drink.`}
+                  ? '1 more drink for a free drink.'
+                  : `${remaining} more drinks for a free drink.`}
             </Text>
           )}
         </View>

@@ -12,10 +12,29 @@ export function friendlyError(error: unknown, fallback?: string): string {
 
   const status = error.response.status;
   const message = error.response.data?.message;
+  const path = error.config?.url || '';
+  const isCredentialAttempt =
+    path.includes('/auth/login') || path.includes('/auth/register');
 
-  if (status === 401) return 'Please sign in again.';
+  // Login/register 401s are bad credentials — not an expired session.
+  if (status === 401) {
+    if (isCredentialAttempt) {
+      if (typeof message === 'string' && message.trim()) return message;
+      return 'Incorrect email or password.';
+    }
+    return 'Please sign in again.';
+  }
   if (status === 403) return 'You do not have permission to do that.';
-  if (status === 404) return 'We could not find what you were looking for.';
+  if (status === 404) {
+    if (
+      path.includes('/auth/me/credentials') ||
+      path.includes('/auth/forgot-password') ||
+      path.includes('/auth/reset-password')
+    ) {
+      return 'Password update is not available on this server yet. Use the local API or deploy the latest backend.';
+    }
+    return 'We could not find what you were looking for.';
+  }
   if (status === 409) return typeof message === 'string' ? message : 'This conflicts with existing data.';
   if (status === 429) return 'Too many attempts. Please wait a moment.';
   if (status >= 500) return 'Our servers are temporarily unavailable. Please try again.';

@@ -33,11 +33,12 @@ export async function setNotificationsPreference(enabled: boolean) {
 
 export async function ensureAndroidChannels() {
   if (Platform.OS !== 'android') return;
+  // Omit `sound` so Android uses the system default notification URI.
+  // Passing sound: 'default' is treated as a custom raw resource name and logs an error.
   await Notifications.setNotificationChannelAsync(ORDERS_CHANNEL, {
     name: 'Orders',
     importance: Notifications.AndroidImportance.MAX,
     vibrationPattern: [0, 250, 250, 250],
-    sound: 'default',
     enableVibrate: true,
     showBadge: true,
     lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
@@ -46,7 +47,6 @@ export async function ensureAndroidChannels() {
   await Notifications.setNotificationChannelAsync('default', {
     name: 'General',
     importance: Notifications.AndroidImportance.HIGH,
-    sound: 'default',
   });
 }
 
@@ -130,7 +130,7 @@ export async function notifyOrderUpdate(order: {
       title: msg.title,
       body: msg.body,
       data: { orderId: order.id ?? '', status },
-      sound: 'default',
+      sound: true,
       ...(Platform.OS === 'android' ? { channelId: ORDERS_CHANNEL } : {}),
     },
     trigger: null,

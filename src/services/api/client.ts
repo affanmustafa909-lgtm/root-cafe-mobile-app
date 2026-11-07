@@ -29,8 +29,17 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
-      await setToken(null);
-      unauthorizedListeners.forEach((listener) => listener());
+      const url = error.config?.url || '';
+      // Failed login/register/password-reset are not expired sessions — don't wipe auth.
+      const isPublicAuth =
+        url.includes('/auth/login') ||
+        url.includes('/auth/register') ||
+        url.includes('/auth/forgot-password') ||
+        url.includes('/auth/reset-password');
+      if (!isPublicAuth) {
+        await setToken(null);
+        unauthorizedListeners.forEach((listener) => listener());
+      }
     }
     return Promise.reject(error);
   },

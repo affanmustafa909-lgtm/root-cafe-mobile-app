@@ -25,9 +25,10 @@ import { friendlyError } from '../utils/errors';
 
 type Props = {
   onOpenLegal: (type: 'impressum' | 'terms' | 'privacy') => void;
+  onChangePassword?: () => void;
 };
 
-export function SettingsScreen({ onOpenLegal }: Props) {
+export function SettingsScreen({ onOpenLegal, onChangePassword }: Props) {
   const { t } = useTranslation();
   const { colors, typography } = useAppTheme();
   const { isAuthenticated, logout, deleteAccount } = useAuth();
@@ -153,11 +154,19 @@ export function SettingsScreen({ onOpenLegal }: Props) {
 
       {isAuthenticated ? (
         <>
+          {onChangePassword ? (
+            <Button
+              title={t('profile.changePassword')}
+              variant="outline"
+              onPress={onChangePassword}
+              style={{ marginTop: 16 }}
+            />
+          ) : null}
           <Button
             title={t('profile.logout')}
             variant="outline"
             onPress={() => void logout()}
-            style={{ marginTop: 16 }}
+            style={{ marginTop: onChangePassword ? 12 : 16 }}
           />
           <Button
             title={t('profile.deleteAccount')}

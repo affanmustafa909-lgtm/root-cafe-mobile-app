@@ -3,11 +3,19 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {
   CommonActions,
   NavigationContainer,
+  createNavigationContainerRef,
   useNavigation,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useState } from 'react';
+import * as Linking from 'expo-linking';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { OfflineBanner } from '../components/OfflineBanner';
@@ -16,7 +24,9 @@ import { registerForPushNotifications } from '../hooks/usePushNotifications';
 import { useMenuSocket } from '../hooks/useMenuSocket';
 import { useOrderSocket } from '../hooks/useOrderSocket';
 import { CartScreen } from '../screens/CartScreen';
+import { ChangePasswordScreen } from '../screens/ChangePasswordScreen';
 import { CheckoutScreen } from '../screens/CheckoutScreen';
+import { ForgotPasswordScreen } from '../screens/ForgotPasswordScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { LegalScreen } from '../screens/LegalScreen';
 import { LoginScreen } from '../screens/LoginScreen';
@@ -28,6 +38,7 @@ import { OrdersScreen } from '../screens/OrdersScreen';
 import { ProductDetailsScreen } from '../screens/ProductDetailsScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { RegisterScreen } from '../screens/RegisterScreen';
+import { ResetPasswordScreen } from '../screens/ResetPasswordScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { SplashScreen } from '../screens/SplashScreen';
 import { WelcomeScreen } from '../screens/WelcomeScreen';
@@ -40,7 +51,7 @@ import { createNavigationTheme } from './navigationTheme';
 export type RootStackParamList = {
   Splash: undefined;
   Welcome: undefined;
-  Auth: { after?: 'Checkout' } | undefined;
+  Auth: { after?: 'Checkout'; screen?: keyof AuthStackParamList; params?: object } | undefined;
   Main: undefined;
   Menu: { categoryId?: string } | undefined;
   ProductDetails: { productId: string; editCartItemId?: string };
@@ -49,12 +60,15 @@ export type RootStackParamList = {
   OrderTracking: { orderId: string };
   OrderDetails: { orderId: string };
   Settings: undefined;
+  ChangePassword: undefined;
   Legal: { type: 'impressum' | 'terms' | 'privacy' };
 };
 
 export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
+  ForgotPassword: undefined;
+  ResetPassword: { token: string };
 };
 
 export type MainTabParamList = {
@@ -67,8 +81,37 @@ export type MainTabParamList = {
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
+const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 type RootNav = NativeStackNavigationProp<RootStackParamList>;
+
+function isExpoDevClientUrl(url: string) {
+  return (
+    url.includes('expo-development-client') ||
+    url.startsWith('exp://') ||
+    url.startsWith('exps://') ||
+    url.startsWith('exp+')
+  );
+}
+
+function resetTokenFromUrl(url: string): string | null {
+  if (isExpoDevClientUrl(url)) return null;
+  try {
+    const parsed = Linking.parse(url);
+    const path = (parsed.path || '').replace(/^\//, '');
+    const token = parsed.queryParams?.token;
+    if (
+      (path === 'reset-password' || path.endsWith('/reset-password')) &&
+      typeof token === 'string' &&
+      token.length >= 20
+    ) {
+      return token;
+    }
+  } catch {
+    /* ignore malformed urls */
+  }
+  return null;
+}
 
 function dismissAuth(
   navigation: {
@@ -120,6 +163,7 @@ function AuthNavigator({
         {({ navigation }) => (
           <LoginScreen
             onRegister={() => navigation.navigate('Register')}
+            onForgotPassword={() => navigation.navigate('ForgotPassword')}
             onSuccess={onAuthenticated}
             onClose={onClose}
           />
@@ -134,6 +178,25 @@ function AuthNavigator({
             onOpenLegal={(type) =>
               navigation.getParent()?.navigate('Legal', { type })
             }
+          />
+        )}
+      </AuthStack.Screen>
+      <AuthStack.Screen name="ForgotPassword">
+        {({ navigation }) => (
+          <ForgotPasswordScreen
+            onBack={() => navigation.navigate('Login')}
+            onResetWithToken={(token) =>
+              navigation.navigate('ResetPassword', { token })
+            }
+          />
+        )}
+      </AuthStack.Screen>
+      <AuthStack.Screen name="ResetPassword">
+        {({ navigation, route }) => (
+          <ResetPasswordScreen
+            token={route.params.token}
+            onBack={() => navigation.navigate('Login')}
+            onSuccess={() => navigation.navigate('Login')}
           />
         )}
       </AuthStack.Screen>
@@ -302,15 +365,47 @@ function MainTabs() {
 
 export function RootNavigator() {
   const { isAuthenticated, isLoading } = useAuth();
-  const [bootReady, setBootReady] = useState(false);
-  const [showSplash, setShowSplash] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(false);
+  /** splash → welcome (guests) | app (signed-in) */
+  const [phase, setPhase] = useState<'splash' | 'welcome' | 'app'>('splash');
   const { t } = useTranslation();
   const { mode, colors, cafe } = useAppTheme();
   useMenuSocket();
-  const navTheme = React.useMemo(() => createNavigationTheme(mode), [mode]);
+  const navTheme = useMemo(() => createNavigationTheme(mode), [mode]);
+  const pendingResetToken = useRef<string | null>(null);
+  const leftSplash = useRef(false);
+  const authRef = useRef(isAuthenticated);
+  authRef.current = isAuthenticated;
 
-  const stackScreenOptions = React.useMemo(
+  const leaveSplash = useCallback(() => {
+    if (leftSplash.current) return;
+    leftSplash.current = true;
+    setPhase(authRef.current ? 'app' : 'welcome');
+  }, []);
+
+  const openResetPassword = useCallback((token: string) => {
+    if (!navigationRef.isReady()) {
+      pendingResetToken.current = token;
+      return;
+    }
+    navigationRef.navigate('Auth', {
+      screen: 'ResetPassword',
+      params: { token },
+    } as never);
+  }, []);
+
+  useEffect(() => {
+    const handleUrl = (url: string | null) => {
+      if (!url) return;
+      const token = resetTokenFromUrl(url);
+      if (token) openResetPassword(token);
+    };
+
+    void Linking.getInitialURL().then(handleUrl);
+    const sub = Linking.addEventListener('url', ({ url }) => handleUrl(url));
+    return () => sub.remove();
+  }, [openResetPassword]);
+
+  const stackScreenOptions = useMemo(
     () => ({
       headerStyle: { backgroundColor: colors.background },
       headerTintColor: colors.text,
@@ -326,39 +421,28 @@ export function RootNavigator() {
     [colors],
   );
 
-  // Guests always see Get Started on cold start. Logged-in users go straight home.
+  // Hard ceiling: leave splash once, never reset by auth flips or remounts of SplashScreen.
   useEffect(() => {
+    const hard = setTimeout(leaveSplash, 2800);
+    return () => clearTimeout(hard);
+  }, [leaveSplash]);
+
+  // Prefer leaving as soon as auth is resolved (after a short brand beat).
+  useEffect(() => {
+    if (phase !== 'splash') return;
     if (isLoading) return;
-    if (isAuthenticated) {
-      setShowSplash(false);
-      setShowWelcome(false);
-      setBootReady(true);
-      return;
-    }
-    setShowSplash(true);
-    setShowWelcome(false);
-    setBootReady(true);
-  }, [isAuthenticated, isLoading]);
+    const soft = setTimeout(leaveSplash, 900);
+    return () => clearTimeout(soft);
+  }, [phase, isLoading, leaveSplash]);
 
-  // Hard fallback: never stay on boot splash if auth hangs
+  // Signed-in users skip welcome if auth resolves after splash already left.
   useEffect(() => {
-    if (bootReady) return;
-    const timer = setTimeout(() => {
-      setShowSplash(true);
-      setShowWelcome(false);
-      setBootReady(true);
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, [bootReady]);
-
-  const onSplashReady = useCallback(() => {
-    setShowSplash(false);
-    setShowWelcome(true);
-  }, []);
+    if (!isAuthenticated) return;
+    if (phase === 'welcome') setPhase('app');
+  }, [isAuthenticated, phase]);
 
   const finishWelcome = useCallback(() => {
-    setShowWelcome(false);
-    setShowSplash(false);
+    setPhase('app');
   }, []);
 
   useEffect(() => {
@@ -368,18 +452,23 @@ export function RootNavigator() {
   }, [isAuthenticated]);
 
   return (
-    <NavigationContainer theme={navTheme}>
+    <NavigationContainer
+      ref={navigationRef}
+      theme={navTheme}
+      onReady={() => {
+        const token = pendingResetToken.current;
+        if (!token) return;
+        pendingResetToken.current = null;
+        openResetPassword(token);
+      }}
+    >
       <OfflineBanner />
       <RootStack.Navigator screenOptions={stackScreenOptions}>
-        {!bootReady || isLoading ? (
+        {phase === 'splash' ? (
           <RootStack.Screen name="Splash" options={{ headerShown: false }}>
-            {() => <SplashScreen onReady={() => {}} quick />}
+            {() => <SplashScreen />}
           </RootStack.Screen>
-        ) : showSplash ? (
-          <RootStack.Screen name="Splash" options={{ headerShown: false }}>
-            {() => <SplashScreen onReady={onSplashReady} />}
-          </RootStack.Screen>
-        ) : showWelcome ? (
+        ) : phase === 'welcome' ? (
           <RootStack.Screen name="Welcome" options={{ headerShown: false }}>
             {() => <WelcomeScreen onGetStarted={finishWelcome} />}
           </RootStack.Screen>
@@ -498,7 +587,16 @@ export function RootNavigator() {
               {({ navigation }) => (
                 <SettingsScreen
                   onOpenLegal={(type) => navigation.navigate('Legal', { type })}
+                  onChangePassword={() => navigation.navigate('ChangePassword')}
                 />
+              )}
+            </RootStack.Screen>
+            <RootStack.Screen
+              name="ChangePassword"
+              options={{ title: t('profile.changePassword') }}
+            >
+              {({ navigation }) => (
+                <ChangePasswordScreen onDone={() => navigation.goBack()} />
               )}
             </RootStack.Screen>
             <RootStack.Screen

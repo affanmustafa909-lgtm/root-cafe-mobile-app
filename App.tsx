@@ -38,13 +38,19 @@ export default function App() {
     Fraunces_600SemiBold,
     Fraunces_700Bold,
   });
+  const [fontWaitExpired, setFontWaitExpired] = React.useState(false);
 
   useEffect(() => {
     void loadSavedLanguage();
   }, []);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setFontWaitExpired(true), 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Don't hang forever on a black screen if fonts fail or stall
-  if (!fontsLoaded && !fontError) {
+  if (!fontsLoaded && !fontError && !fontWaitExpired) {
     return <View style={{ flex: 1, backgroundColor: fallbackColors.black }} />;
   }
 
